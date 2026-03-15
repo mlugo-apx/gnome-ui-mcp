@@ -29,29 +29,36 @@ uv run --active gnome-ui-mcp
 
 ## Releasing
 
-1. Update `version` in `pyproject.toml`.
-2. Run `./scripts/check.sh`.
-3. Commit the release, for example:
+Preferred path:
 
 ```bash
-git add pyproject.toml uv.lock
-git commit -m "Release version 0.1.1"
+./scripts/release.sh patch
 ```
 
-4. Create an annotated tag that matches the package version:
+The script updates `pyproject.toml` and `server.json`, refreshes the local
+environment, runs `./scripts/check.sh`, creates the release commit, and adds
+the annotated tag locally. It does not push.
+
+You can also release an explicit version:
 
 ```bash
-git tag -a v0.1.1 -m "Release v0.1.1"
+./scripts/release.sh 0.1.1
 ```
 
-5. Push the branch and the tag:
+To preview the next version without changing anything:
+
+```bash
+./scripts/release.sh --dry-run patch
+```
+
+After the script finishes, push the branch and the tag:
 
 ```bash
 git push origin main
 git push origin v0.1.1
 ```
 
-6. Optionally publish a GitHub Release for the same tag.
+Optionally publish a GitHub Release for the same tag.
 
 Pushing a `v*` tag triggers CI and publishes versioned GHCR image tags.
 The same tag push also publishes the server metadata to the official MCP Registry.
