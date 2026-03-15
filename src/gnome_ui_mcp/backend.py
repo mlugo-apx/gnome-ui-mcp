@@ -122,8 +122,20 @@ def type_text(text: str) -> JsonDict:
     return input.type_text(text=text)
 
 
-def press_key(key_name: str) -> JsonDict:
-    return input.press_key(key_name=key_name)
+def press_key(
+    key_name: str,
+    element_id: str | None = None,
+    settle_timeout_ms: int = 1_500,
+    stable_for_ms: int = 250,
+    poll_interval_ms: int = 50,
+) -> JsonDict:
+    return interaction.press_key(
+        key_name=key_name,
+        element_id=element_id,
+        settle_timeout_ms=settle_timeout_ms,
+        stable_for_ms=stable_for_ms,
+        poll_interval_ms=poll_interval_ms,
+    )
 
 
 def screenshot(filename: str | None = None) -> JsonDict:
@@ -148,6 +160,34 @@ def element_at_point(
 
 def visible_shell_popups() -> JsonDict:
     return accessibility.visible_shell_popups()
+
+
+def wait_for_popup_count(
+    count: int,
+    timeout_ms: int = 5_000,
+    poll_interval_ms: int = 100,
+    max_depth: int = 10,
+) -> JsonDict:
+    return accessibility.wait_for_popup_count(
+        count=count,
+        timeout_ms=timeout_ms,
+        poll_interval_ms=poll_interval_ms,
+        max_depth=max_depth,
+    )
+
+
+def wait_for_shell_settled(
+    timeout_ms: int = 1_500,
+    stable_for_ms: int = 250,
+    poll_interval_ms: int = 50,
+    max_depth: int = 10,
+) -> JsonDict:
+    return accessibility.wait_for_shell_settled(
+        timeout_ms=timeout_ms,
+        stable_for_ms=stable_for_ms,
+        poll_interval_ms=poll_interval_ms,
+        max_depth=max_depth,
+    )
 
 
 def wait_for_element(

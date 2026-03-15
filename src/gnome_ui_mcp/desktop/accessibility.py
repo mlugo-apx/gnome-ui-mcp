@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import time
 from collections.abc import Iterable
 from typing import Any
@@ -115,6 +116,17 @@ def _element_bounds(accessible: Atspi.Accessible) -> JsonDict | None:
         "width": int(extents.width),
         "height": int(extents.height),
     }
+
+
+def _is_editable_element(
+    accessible: Atspi.Accessible,
+    *,
+    states: list[str] | None = None,
+) -> bool:
+    resolved_states = states if states is not None else _element_states(accessible)
+    if "editable" in resolved_states:
+        return True
+    return _safe_call(accessible.get_editable_text_iface) is not None
 
 
 def _element_text_preview(accessible: Atspi.Accessible, max_chars: int = 200) -> str | None:
@@ -291,6 +303,50 @@ def _application_name_for_element_id(element_id: str) -> str:
         return ""
 
 
+def _subtree_fingerprint(
+    accessible: Atspi.Accessible,
+    *,
+    max_depth: int = 2,
+    max_nodes: int = 40,
+) -> str:
+    parts: list[str] = []
+
+    def collect(node: Atspi.Accessible, depth: int) -> None:
+        if len(parts) >= max_nodes:
+            return
+
+        states = [
+            state
+            for state in _element_states(node)
+            if state in {"active", "checked", "expanded", "focused", "selected", "showing"}
+        ]
+        parts.append(
+            "|".join(
+                [
+                    _safe_call(node.get_role_name, ""),
+                    _safe_call(node.get_name, ""),
+                    _element_text_preview(node, max_chars=80) or "",
+                    ",".join(states),
+                ]
+            )
+        )
+
+        if depth >= max_depth:
+            return
+
+        child_count = _safe_call(node.get_child_count, 0) or 0
+        for index in range(child_count):
+            child = _safe_call(lambda idx=index: node.get_child_at_index(idx))
+            if child is None:
+                continue
+            collect(child, depth + 1)
+            if len(parts) >= max_nodes:
+                return
+
+    collect(accessible, 0)
+    return hashlib.sha1("\n".join(parts).encode("utf-8")).hexdigest()
+
+
 def _element_snapshot(element_id: str) -> JsonDict:
     accessible = _resolve_element(element_id)
     return {
@@ -301,7 +357,29 @@ def _element_snapshot(element_id: str) -> JsonDict:
         "states": _element_states(accessible),
         "bounds": _element_bounds(accessible),
         "text": _element_text_preview(accessible, max_chars=200),
+        "subtree_fingerprint": _subtree_fingerprint(accessible),
     }
+
+
+def current_focus_metadata(*, max_depth: int = 16) -> JsonDict | None:
+    best_match: JsonDict | None = None
+    best_depth = -1
+
+    for app, app_path in _iter_applications():
+        app_label = _safe_call(app.get_name, "")
+        for element, path, depth in _walk_tree(app, app_path, depth=0, max_depth=max_depth):
+            states = _element_states(element)
+            if "focused" not in states:
+                continue
+            if depth < best_depth:
+                continue
+
+            best_match = _element_summary(element, path, include_actions=False, include_text=True)
+            best_match["application"] = app_label
+            best_match["editable"] = _is_editable_element(element, states=states)
+            best_depth = depth
+
+    return best_match
 
 
 def _is_menu_like_role(role_name: str) -> bool:
@@ -346,8 +424,19 @@ def _visible_shell_popup_matches(
     return [popup_candidates[path] for path in unique_roots]
 
 
+def _visible_shell_popup_state(*, max_depth: int = 10) -> JsonDict:
+    popups = _visible_shell_popup_matches(max_depth=max_depth)
+    signature = sorted(str(item["id"]) for item in popups)
+    return {
+        "popups": popups,
+        "popup_count": len(popups),
+        "signature": signature,
+    }
+
+
 def _shell_popup_signature() -> list[str]:
-    return sorted(item["id"] for item in _visible_shell_popup_matches())
+    state = _visible_shell_popup_state()
+    return list(state["signature"])
 
 
 def _search_roots(
@@ -699,7 +788,73 @@ def element_at_point(
 
 
 def visible_shell_popups() -> JsonDict:
-    return {"success": True, "popups": _visible_shell_popup_matches()}
+    state = _visible_shell_popup_state()
+    return {"success": True, **state}
+
+
+def wait_for_popup_count(
+    count: int,
+    *,
+    timeout_ms: int = 5_000,
+    poll_interval_ms: int = 100,
+    max_depth: int = 10,
+) -> JsonDict:
+    deadline = time.monotonic() + timeout_ms / 1000
+    last_state = _visible_shell_popup_state(max_depth=max_depth)
+
+    while time.monotonic() < deadline:
+        state = _visible_shell_popup_state(max_depth=max_depth)
+        last_state = state
+        if int(state["popup_count"]) == count:
+            return {"success": True, "count": count, **state}
+
+        time.sleep(max(0.02, poll_interval_ms / 1000))
+
+    return {
+        "success": False,
+        "error": "Timeout waiting for popup count",
+        "count": count,
+        **last_state,
+    }
+
+
+def wait_for_shell_settled(
+    *,
+    timeout_ms: int = 1_500,
+    stable_for_ms: int = 250,
+    poll_interval_ms: int = 50,
+    max_depth: int = 10,
+) -> JsonDict:
+    deadline = time.monotonic() + timeout_ms / 1000
+    stable_deadline = stable_for_ms / 1000
+    last_state = _visible_shell_popup_state(max_depth=max_depth)
+    last_signature = list(last_state["signature"])
+    last_change_at = time.monotonic()
+
+    while time.monotonic() < deadline:
+        state = _visible_shell_popup_state(max_depth=max_depth)
+        signature = list(state["signature"])
+
+        if signature != last_signature:
+            last_signature = signature
+            last_change_at = time.monotonic()
+
+        if time.monotonic() - last_change_at >= stable_deadline:
+            return {
+                "success": True,
+                "stable_for_ms": stable_for_ms,
+                **state,
+            }
+
+        last_state = state
+        time.sleep(max(0.02, poll_interval_ms / 1000))
+
+    return {
+        "success": False,
+        "error": "Timeout waiting for shell state to settle",
+        "stable_for_ms": stable_for_ms,
+        **last_state,
+    }
 
 
 def wait_for_element(

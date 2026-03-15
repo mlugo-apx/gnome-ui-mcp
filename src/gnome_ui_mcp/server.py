@@ -206,9 +206,28 @@ def type_text(text: str) -> CallToolResult:
     return _run_tool(lambda: backend.type_text(text=text))
 
 
-@mcp.tool(description="Press and release a key by GDK key name, for example Return or Escape.")
-def press_key(key_name: str) -> CallToolResult:
-    return _run_tool(lambda: backend.press_key(key_name=key_name))
+@mcp.tool(
+    description=(
+        "Press and release a key by GDK key name, optionally verifying the effect against a "
+        "target element and settled GNOME Shell popup state."
+    )
+)
+def press_key(
+    key_name: str,
+    element_id: str | None = None,
+    settle_timeout_ms: int = 1_500,
+    stable_for_ms: int = 250,
+    poll_interval_ms: int = 50,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.press_key(
+            key_name=key_name,
+            element_id=element_id,
+            settle_timeout_ms=settle_timeout_ms,
+            stable_for_ms=stable_for_ms,
+            poll_interval_ms=poll_interval_ms,
+        )
+    )
 
 
 @mcp.tool(description="Capture the current GNOME desktop to a PNG file.")
@@ -238,6 +257,40 @@ def element_at_point(
 @mcp.tool(description="Return visible GNOME Shell popup or menu containers.")
 def visible_shell_popups() -> CallToolResult:
     return _run_tool(backend.visible_shell_popups)
+
+
+@mcp.tool(description="Poll the GNOME Shell until the number of visible popups matches a count.")
+def wait_for_popup_count(
+    count: int,
+    timeout_ms: int = 5_000,
+    poll_interval_ms: int = 100,
+    max_depth: int = 10,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.wait_for_popup_count(
+            count=count,
+            timeout_ms=timeout_ms,
+            poll_interval_ms=poll_interval_ms,
+            max_depth=max_depth,
+        )
+    )
+
+
+@mcp.tool(description="Poll until GNOME Shell popup state has stayed unchanged for a short time.")
+def wait_for_shell_settled(
+    timeout_ms: int = 1_500,
+    stable_for_ms: int = 250,
+    poll_interval_ms: int = 50,
+    max_depth: int = 10,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.wait_for_shell_settled(
+            timeout_ms=timeout_ms,
+            stable_for_ms=stable_for_ms,
+            poll_interval_ms=poll_interval_ms,
+            max_depth=max_depth,
+        )
+    )
 
 
 @mcp.tool(

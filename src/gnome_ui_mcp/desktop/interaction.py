@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from . import accessibility, input
@@ -44,7 +45,7 @@ def _verify_effect(before: JsonDict, after: JsonDict) -> tuple[bool | None, Json
         and before_element.get("exists")
         and after_element.get("exists")
     ):
-        for field_name in ("text", "bounds", "name"):
+        for field_name in ("text", "bounds", "name", "subtree_fingerprint"):
             if before_element.get(field_name) != after_element.get(field_name):
                 return True, {"reason": f"target_{field_name}_changed"}
 
@@ -80,11 +81,158 @@ def _apply_interaction_result(
     return result
 
 
+def _settled_effect_context(
+    element_id: str | None = None,
+    *,
+    settle_timeout_ms: int = 1_500,
+    stable_for_ms: int = 250,
+    poll_interval_ms: int = 50,
+) -> tuple[JsonDict, JsonDict]:
+    settled = accessibility.wait_for_shell_settled(
+        timeout_ms=settle_timeout_ms,
+        stable_for_ms=stable_for_ms,
+        poll_interval_ms=poll_interval_ms,
+    )
+    return _effect_context(element_id), settled
+
+
+def _verified_result_after_settle(
+    result: JsonDict,
+    *,
+    before: JsonDict,
+    element_id: str | None = None,
+    input_injected: bool,
+    settle_timeout_ms: int = 1_500,
+    stable_for_ms: int = 250,
+    poll_interval_ms: int = 50,
+) -> JsonDict:
+    after, settled = _settled_effect_context(
+        element_id,
+        settle_timeout_ms=settle_timeout_ms,
+        stable_for_ms=stable_for_ms,
+        poll_interval_ms=poll_interval_ms,
+    )
+    verified, verification = _verify_effect(before, after)
+    verification["shell_settled"] = settled
+    if not settled.get("success"):
+        verified = False
+        verification["reason"] = "shell_not_settled"
+
+    return _apply_interaction_result(
+        result,
+        input_injected=input_injected,
+        effect_verified=verified,
+        verification=verification,
+    )
+
+
 def _activation_keys_for_role(role_name: str) -> list[str]:
     normalized = role_name.casefold()
     if "menu" in normalized:
         return ["space", "Return"]
     return ["Return", "space"]
+
+
+def _focus_debug_summary(focus: JsonDict | None) -> JsonDict | None:
+    if focus is None:
+        return None
+
+    return {
+        "id": focus.get("id"),
+        "name": focus.get("name"),
+        "role": focus.get("role"),
+        "application": focus.get("application"),
+        "editable": bool(focus.get("editable")),
+        "states": list(focus.get("states", [])),
+    }
+
+
+def _focus_verification_details(
+    focus: JsonDict | None,
+    *,
+    target_id: str,
+    target_app: str,
+) -> JsonDict:
+    if focus is None:
+        return {
+            "focus_verified": False,
+            "focus_match": "none",
+            "reason": "no_focused_element",
+        }
+
+    focused_id = str(focus.get("id", ""))
+    focused_app = str(focus.get("application", ""))
+    editable = bool(focus.get("editable"))
+
+    if focused_id == target_id:
+        return {
+            "focus_verified": True,
+            "focus_match": "element",
+            "reason": "target_element_focused",
+        }
+
+    if target_app and focused_app == target_app and not editable:
+        return {
+            "focus_verified": True,
+            "focus_match": "application",
+            "reason": "target_application_focused",
+        }
+
+    if editable:
+        reason = "focused_element_is_editable"
+    elif target_app and focused_app and focused_app != target_app:
+        reason = "focused_application_mismatch"
+    else:
+        reason = "target_not_focused"
+
+    return {
+        "focus_verified": False,
+        "focus_match": "none",
+        "reason": reason,
+    }
+
+
+def _wait_for_focus_verification(
+    target_id: str,
+    *,
+    timeout_ms: int = 400,
+    poll_interval_ms: int = 50,
+) -> JsonDict:
+    target_app = accessibility._application_name_for_element_id(target_id)
+    deadline = time.monotonic() + timeout_ms / 1000
+    last_focus = accessibility.current_focus_metadata()
+    last_verification = _focus_verification_details(
+        last_focus,
+        target_id=target_id,
+        target_app=target_app,
+    )
+
+    while True:
+        focus = accessibility.current_focus_metadata()
+        verification = _focus_verification_details(
+            focus,
+            target_id=target_id,
+            target_app=target_app,
+        )
+        last_focus = focus
+        last_verification = verification
+        if verification["focus_verified"]:
+            return {
+                "success": True,
+                "target_app": target_app,
+                "current_focus": _focus_debug_summary(focus),
+                **verification,
+            }
+
+        if time.monotonic() >= deadline:
+            return {
+                "success": False,
+                "target_app": target_app,
+                "current_focus": _focus_debug_summary(last_focus),
+                **last_verification,
+            }
+
+        time.sleep(max(0.02, poll_interval_ms / 1000))
 
 
 def _resolve_target_with_recovery(element_id: str) -> tuple[str, JsonDict, JsonDict | None]:
@@ -260,13 +408,31 @@ def activate_element(element_id: str, action_name: str | None = None) -> JsonDic
             }
         current_before = current_after
 
-    focus_result = accessibility.focus_element(target_id)
-    if focus_result.get("success"):
+    previous_focus = _focus_debug_summary(accessibility.current_focus_metadata())
+    focus_checks: list[JsonDict] = []
+    for _attempt_index in range(2):
+        focus_result = accessibility.focus_element(target_id)
+        focus_check = _wait_for_focus_verification(target_id)
+        focus_checks.append(
+            {
+                "focus_requested": bool(focus_result.get("success")),
+                "focus_verified": bool(focus_check.get("focus_verified")),
+                "focus_match": focus_check.get("focus_match"),
+                "reason": focus_check.get("reason"),
+                "target_app": focus_check.get("target_app"),
+                "current_focus": focus_check.get("current_focus"),
+            }
+        )
+        if focus_result.get("success") and focus_check.get("focus_verified"):
+            break
+    else:
+        focus_result = {"success": False}
+        focus_check = focus_checks[-1] if focus_checks else {"focus_verified": False}
+
+    if focus_result.get("success") and focus_check.get("focus_verified"):
         for key_name in _activation_keys_for_role(str(target["target_role"])):
             key_result = input.press_key(key_name)
-            current_after = _effect_context(target_id)
-            verified, verification = _verify_effect(current_before, current_after)
-            attempt = _apply_interaction_result(
+            attempt = _verified_result_after_settle(
                 {
                     "method": "focus+key",
                     "key_name": key_name,
@@ -274,9 +440,14 @@ def activate_element(element_id: str, action_name: str | None = None) -> JsonDic
                     "backend": key_result.get("backend"),
                 },
                 input_injected=bool(key_result.get("success")),
-                effect_verified=verified,
-                verification=verification,
+                before=current_before,
+                element_id=target_id,
             )
+            attempt["focus_verified"] = bool(focus_check.get("focus_verified"))
+            attempt["focus_match"] = focus_check.get("focus_match")
+            attempt["previous_focus"] = previous_focus
+            attempt["current_focus"] = focus_check.get("current_focus")
+            attempt["focus_checks"] = list(focus_checks)
             if key_result.get("fallback_error"):
                 attempt["fallback_error"] = key_result["fallback_error"]
             attempts.append(attempt)
@@ -291,7 +462,27 @@ def activate_element(element_id: str, action_name: str | None = None) -> JsonDic
                     "attempts": attempts,
                     "recovery": recovery,
                 }
-            current_before = current_after
+            current_before = _effect_context(target_id)
+    elif focus_checks:
+        attempts.append(
+            {
+                "method": "focus+key",
+                "key_name": None,
+                "focus_element_id": target_id,
+                "focus_verified": False,
+                "focus_match": focus_checks[-1].get("focus_match"),
+                "previous_focus": previous_focus,
+                "current_focus": focus_checks[-1].get("current_focus"),
+                "focus_checks": list(focus_checks),
+                "input_injected": False,
+                "effect_verified": False,
+                "verification": {
+                    "reason": "focus_not_verified",
+                    "focus_checks": list(focus_checks),
+                },
+                "success": False,
+            }
+        )
 
     center = accessibility._center(accessibility._element_bounds(accessible))
     if center is not None:
@@ -381,6 +572,37 @@ def find_and_activate(
     activation["match"] = match
     activation["locator"] = match.get("locator")
     return activation
+
+
+def press_key(
+    key_name: str,
+    *,
+    element_id: str | None = None,
+    settle_timeout_ms: int = 1_500,
+    stable_for_ms: int = 250,
+    poll_interval_ms: int = 50,
+) -> JsonDict:
+    before = _effect_context(element_id)
+    key_result = input.press_key(key_name)
+    result = _verified_result_after_settle(
+        {
+            "method": "key",
+            "key_name": key_name,
+            "element_id": element_id,
+            "backend": key_result.get("backend"),
+        },
+        before=before,
+        element_id=element_id,
+        input_injected=bool(key_result.get("success")),
+        settle_timeout_ms=settle_timeout_ms,
+        stable_for_ms=stable_for_ms,
+        poll_interval_ms=poll_interval_ms,
+    )
+    if key_result.get("fallback_error"):
+        result["fallback_error"] = key_result["fallback_error"]
+    if "keyval" in key_result:
+        result["keyval"] = key_result["keyval"]
+    return result
 
 
 def click_at(x: int, y: int, button: str = "left") -> JsonDict:
