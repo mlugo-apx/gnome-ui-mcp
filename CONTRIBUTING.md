@@ -54,4 +54,5 @@ git push origin v0.1.1
 6. Optionally publish a GitHub Release for the same tag.
 
 Pushing a `v*` tag triggers CI and publishes versioned GHCR image tags.
+The same tag push also publishes the server metadata to the official MCP Registry.
 Pushing `main` updates the `latest` image tag.

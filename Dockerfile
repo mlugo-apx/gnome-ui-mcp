@@ -6,6 +6,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+LABEL io.modelcontextprotocol.server.name="io.github.asattelmaier/gnome-ui-mcp"
+
 COPY --from=uv /uv /uvx /bin/
 
 RUN apt-get update \

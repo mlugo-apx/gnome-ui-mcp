@@ -1,0 +1,109 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.asattelmaier/gnome-ui-mcp",
+  "title": "GNOME UI MCP",
+  "description": "GNOME Wayland desktop automation via AT-SPI discovery and Mutter input.",
+  "version": "0.1.0",
+  "repository": {
+    "id": "1182349667",
+    "source": "github",
+    "url": "https://github.com/asattelmaier/gnome-ui-mcp"
+  },
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/asattelmaier/gnome-ui-mcp:0.1.0",
+      "version": "0.1.0",
+      "runtimeHint": "docker",
+      "runtimeArguments": [
+        {
+          "type": "positional",
+          "value": "run"
+        },
+        {
+          "type": "named",
+          "name": "-i"
+        },
+        {
+          "type": "named",
+          "name": "--rm"
+        },
+        {
+          "type": "named",
+          "name": "--security-opt",
+          "value": "apparmor=unconfined"
+        },
+        {
+          "type": "named",
+          "name": "--network",
+          "value": "host"
+        },
+        {
+          "type": "named",
+          "name": "--user",
+          "value": "{uid}:{gid}",
+          "variables": {
+            "uid": {
+              "default": "1000",
+              "description": "Host user ID used to run the container.",
+              "format": "number",
+              "isRequired": true
+            },
+            "gid": {
+              "default": "1000",
+              "description": "Host group ID used to run the container.",
+              "format": "number",
+              "isRequired": true
+            }
+          }
+        },
+        {
+          "type": "named",
+          "name": "-e",
+          "value": "DBUS_SESSION_BUS_ADDRESS"
+        },
+        {
+          "type": "named",
+          "name": "-e",
+          "value": "XDG_RUNTIME_DIR"
+        },
+        {
+          "type": "named",
+          "name": "-e",
+          "value": "WAYLAND_DISPLAY"
+        },
+        {
+          "type": "named",
+          "name": "-e",
+          "value": "DISPLAY"
+        },
+        {
+          "type": "named",
+          "name": "-e",
+          "value": "XDG_SESSION_TYPE"
+        },
+        {
+          "type": "named",
+          "name": "-v",
+          "value": "{xdg_runtime_dir}:{xdg_runtime_dir}",
+          "variables": {
+            "xdg_runtime_dir": {
+              "description": "Host XDG runtime directory mounted into the container.",
+              "format": "filepath",
+              "isRequired": true,
+              "placeholder": "/run/user/1000"
+            }
+          }
+        },
+        {
+          "type": "named",
+          "name": "-v",
+          "value": "/tmp/.X11-unix:/tmp/.X11-unix:ro"
+        }
+      ],
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
