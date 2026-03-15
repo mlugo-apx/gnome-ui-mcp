@@ -13,7 +13,6 @@ It exposes GNOME desktop inspection and interaction through AT-SPI for discovery
 ### Docker
 
 - Docker Engine
-- Access to the Docker socket
 
 The container must run on the same machine as the GNOME session and use the session environment plus runtime mounts.
 
@@ -33,6 +32,7 @@ Direct `docker run`:
 
 ```bash
 docker run --rm \
+  --security-opt apparmor=unconfined \
   --network host \
   --user "$(id -u):$(id -g)" \
   -e DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
@@ -68,6 +68,8 @@ docker compose run --rm gnome-ui-mcp
       "args": [
         "run",
         "--rm",
+        "--security-opt",
+        "apparmor=unconfined",
         "--network",
         "host",
         "--user",
@@ -96,3 +98,5 @@ docker compose run --rm gnome-ui-mcp
 ## Security
 
 This server can inspect and control the active desktop session. Use it only with trusted MCP clients.
+Containerized execution on Ubuntu may require `--security-opt apparmor=unconfined`
+so the process can talk to the GNOME session buses.
