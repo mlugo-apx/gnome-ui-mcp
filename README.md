@@ -45,6 +45,9 @@ docker run --rm \
   ghcr.io/asattelmaier/gnome-ui-mcp:latest
 ```
 
+`--user "$(id -u):$(id -g)"` is required so the container joins the same user
+session as GNOME, D-Bus, and AT-SPI.
+
 Local development via Compose:
 
 This path additionally requires `docker compose`.
