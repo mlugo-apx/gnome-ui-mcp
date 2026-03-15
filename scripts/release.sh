@@ -136,7 +136,7 @@ server = json.loads(server_path.read_text(encoding="utf-8"))
 server["version"] = next_version
 
 for package in server.get("packages", []):
-    package["version"] = next_version
+    package.pop("version", None)
     identifier = package.get("identifier")
     if isinstance(identifier, str) and ":" in identifier and "@" not in identifier:
         package["identifier"] = f"{identifier.rsplit(':', 1)[0]}:{next_version}"

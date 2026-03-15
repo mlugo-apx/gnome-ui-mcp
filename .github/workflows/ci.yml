@@ -101,9 +101,12 @@ jobs:
           IMAGE="ghcr.io/${{ github.repository }}:${VERSION}"
           jq --arg version "$VERSION" --arg image "$IMAGE" '
             .version = $version
-            | .packages |= map(.version = $version | .identifier = $image)
+            | .packages |= map(del(.version) | .identifier = $image)
           ' server.json > server.json.tmp
           mv server.json.tmp server.json
+
+      - name: Validate server metadata
+        run: ./mcp-publisher validate server.json
 
       - name: Authenticate to MCP Registry
         run: ./mcp-publisher login github-oidc

@@ -13,7 +13,6 @@
     {
       "registryType": "oci",
       "identifier": "ghcr.io/asattelmaier/gnome-ui-mcp:0.1.1",
-      "version": "0.1.1",
       "runtimeHint": "docker",
       "runtimeArguments": [
         {
