@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import atexit
-import os
-import subprocess
 import threading
 import time
 from dataclasses import dataclass
@@ -14,7 +12,10 @@ from ..runtime.gi_env import Atspi, Gdk, Gio, GLib
 JsonDict = dict[str, Any]
 
 CACHE_DIR = Path.home() / ".cache" / "gnome-ui-mcp" / "screenshots"
-GNOME_SCREENSHOT_BIN = "/usr/bin/gnome-screenshot"
+GNOME_SHELL_SCREENSHOT_BUS = "org.gnome.Shell.Screenshot"
+GNOME_SHELL_SCREENSHOT_PATH = "/org/gnome/Shell/Screenshot"
+GNOME_SHELL_SCREENSHOT_IFACE = "org.gnome.Shell.Screenshot"
+GNOME_SCREENSHOT_WELL_KNOWN_NAME = "org.gnome.Screenshot"
 MUTTER_REMOTE_DESKTOP_BUS = "org.gnome.Mutter.RemoteDesktop"
 MUTTER_REMOTE_DESKTOP_PATH = "/org/gnome/Mutter/RemoteDesktop"
 MUTTER_REMOTE_DESKTOP_IFACE = "org.gnome.Mutter.RemoteDesktop"
@@ -532,28 +533,80 @@ def type_text(text: str) -> JsonDict:
         return result
 
 
-def _child_process_env() -> JsonDict:
-    env: JsonDict = {
-        "PATH": "/usr/bin:/bin",
-        "HOME": str(Path.home()),
-    }
-
-    for key in (
-        "DBUS_SESSION_BUS_ADDRESS",
-        "DISPLAY",
-        "WAYLAND_DISPLAY",
-        "XDG_RUNTIME_DIR",
-        "XDG_SESSION_TYPE",
-    ):
-        value = os.environ.get(key)
-        if value:
-            env[key] = value
-
-    return env
-
-
 def remote_input_info() -> JsonDict:
     return _REMOTE_INPUT.info()
+
+
+def _screenshot_dbus(output_path: str) -> tuple[bool, str]:
+    bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+
+    acquire_result = bus.call_sync(
+        "org.freedesktop.DBus",
+        "/org/freedesktop/DBus",
+        "org.freedesktop.DBus",
+        "RequestName",
+        GLib.Variant("(su)", (GNOME_SCREENSHOT_WELL_KNOWN_NAME, 0x4)),
+        GLib.VariantType("(u)"),
+        Gio.DBusCallFlags.NONE,
+        -1,
+        None,
+    )
+    reply_code = acquire_result.unpack()[0]
+    if reply_code not in (1, 4):
+        msg = f"Could not acquire {GNOME_SCREENSHOT_WELL_KNOWN_NAME} bus name (code={reply_code})"
+        raise RuntimeError(msg)
+
+    try:
+        proxy = Gio.DBusProxy.new_for_bus_sync(
+            Gio.BusType.SESSION,
+            Gio.DBusProxyFlags.DO_NOT_AUTO_START,
+            None,
+            GNOME_SHELL_SCREENSHOT_BUS,
+            GNOME_SHELL_SCREENSHOT_PATH,
+            GNOME_SHELL_SCREENSHOT_IFACE,
+            None,
+        )
+        result = proxy.call_sync(
+            "Screenshot",
+            GLib.Variant("(bbs)", (False, False, output_path)),
+            Gio.DBusCallFlags.NONE,
+            5000,
+            None,
+        )
+        success, filename_used = result.unpack()
+        return success, filename_used
+    finally:
+        bus.call_sync(
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "ReleaseName",
+            GLib.Variant("(s)", (GNOME_SCREENSHOT_WELL_KNOWN_NAME,)),
+            GLib.VariantType("(u)"),
+            Gio.DBusCallFlags.NONE,
+            -1,
+            None,
+        )
+
+
+def screenshot_info() -> JsonDict:
+    try:
+        Gio.DBusProxy.new_for_bus_sync(
+            Gio.BusType.SESSION,
+            Gio.DBusProxyFlags.DO_NOT_AUTO_START,
+            None,
+            GNOME_SHELL_SCREENSHOT_BUS,
+            GNOME_SHELL_SCREENSHOT_PATH,
+            GNOME_SHELL_SCREENSHOT_IFACE,
+            None,
+        )
+        return {
+            "available": True,
+            "backend": "dbus",
+            "interface": GNOME_SHELL_SCREENSHOT_IFACE,
+        }
+    except Exception as exc:
+        return {"available": False, "error": str(exc)}
 
 
 def screenshot(filename: str | None = None) -> JsonDict:
@@ -565,17 +618,12 @@ def screenshot(filename: str | None = None) -> JsonDict:
     )
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    result = subprocess.run(
-        [GNOME_SCREENSHOT_BIN, "-f", str(output)],
-        capture_output=True,
-        text=True,
-        check=False,
-        env=_child_process_env(),
-    )
-    if result.returncode != 0:
-        return {
-            "success": False,
-            "error": result.stderr.strip() or "gnome-screenshot failed",
-        }
+    try:
+        success, filename_used = _screenshot_dbus(str(output))
+    except (GLib.Error, RuntimeError) as exc:
+        return {"success": False, "error": str(exc)}
 
-    return {"success": True, "path": str(output)}
+    if not success:
+        return {"success": False, "error": "Shell screenshot returned failure"}
+
+    return {"success": True, "path": filename_used}

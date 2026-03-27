@@ -18,7 +18,6 @@ RUN apt-get update \
     python3-gi \
     gir1.2-atspi-2.0 \
     gir1.2-gtk-3.0 \
-    gnome-screenshot \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
