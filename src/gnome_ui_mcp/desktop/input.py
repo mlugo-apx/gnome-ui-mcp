@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import atexit
+import os
 import shutil
 import subprocess
 import threading
@@ -943,6 +944,7 @@ def screenshot_window(
         "mode": "window",
         "include_frame": include_frame,
     }
+
 
 
 def _child_process_env() -> dict[str, str]:
