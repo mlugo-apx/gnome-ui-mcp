@@ -636,6 +636,8 @@ def key_combo(
     if combo_result.get("fallback_error"):
         result["fallback_error"] = combo_result["fallback_error"]
     return result
+
+
 def hover_element(element_id: str) -> JsonDict:
     try:
         accessible = accessibility._resolve_element(element_id)
