@@ -264,6 +264,16 @@ def type_text(text: str) -> CallToolResult:
     return _run_tool(lambda: backend.type_text(text=text))
 
 
+@mcp.tool(
+    description=(
+        "Type arbitrary Unicode text (CJK, emoji, special characters) into the focused element. "
+        "Uses clipboard for characters outside the keyboard layout, direct keysym for ASCII."
+    )
+)
+def type_unicode(text: str) -> CallToolResult:
+    return _run_tool(lambda: backend.type_unicode(text=text))
+
+
 @mcp.tool(description="Press and hold a key without releasing it. Use key_up to release.")
 def key_down(key_name: str) -> CallToolResult:
     return _run_tool(lambda: backend.key_down(key_name=key_name))

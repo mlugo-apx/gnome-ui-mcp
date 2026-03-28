@@ -153,6 +153,10 @@ def type_text(text: str) -> JsonDict:
     return input.type_text(text=text)
 
 
+def type_unicode(text: str) -> JsonDict:
+    return input.type_unicode(text=text)
+
+
 def key_down(key_name: str) -> JsonDict:
     return input.key_down(key_name)
 

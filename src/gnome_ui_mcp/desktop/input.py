@@ -912,6 +912,98 @@ def type_text(text: str) -> JsonDict:
         return result
 
 
+def _needs_clipboard_input(text: str) -> bool:
+    for char in text:
+        keyval = Gdk.unicode_to_keyval(ord(char))
+        if keyval == 0 or keyval >= 0x01000000:
+            return True
+    return False
+
+
+def _paste_via_keyboard() -> None:
+    ctrl_keyval = _key_name_to_keyval("Control_L")
+    v_keyval = _key_name_to_keyval("v")
+    _REMOTE_INPUT._ensure_session()
+    _REMOTE_INPUT._call_session("NotifyKeyboardKeysym", GLib.Variant("(ub)", (ctrl_keyval, True)))
+    _REMOTE_INPUT._call_session("NotifyKeyboardKeysym", GLib.Variant("(ub)", (v_keyval, True)))
+    _REMOTE_INPUT._call_session("NotifyKeyboardKeysym", GLib.Variant("(ub)", (v_keyval, False)))
+    _REMOTE_INPUT._call_session("NotifyKeyboardKeysym", GLib.Variant("(ub)", (ctrl_keyval, False)))
+
+
+def type_unicode(text: str) -> JsonDict:
+    if text == "":
+        return {"success": True, "text_length": 0, "method": "none"}
+
+    if not _needs_clipboard_input(text):
+        return type_text(text)
+
+    original_clipboard: bytes = b""
+    try:
+        paste_result = subprocess.run(
+            ["wl-paste", "--no-newline"],
+            capture_output=True,
+            timeout=3,
+        )
+        if paste_result.returncode == 0:
+            original_clipboard = paste_result.stdout
+    except FileNotFoundError:
+        return {"success": False, "error": "wl-paste not found. Install wl-clipboard."}
+    except Exception:
+        pass
+
+    try:
+        subprocess.run(
+            ["wl-copy", "--"],
+            input=text.encode("utf-8"),
+            capture_output=True,
+            timeout=3,
+        )
+        time.sleep(0.05)
+        _paste_via_keyboard()
+        time.sleep(0.1)
+
+        return {
+            "success": True,
+            "text_length": len(text),
+            "method": "clipboard",
+            "backend": "mutter-remote-desktop",
+        }
+    except FileNotFoundError:
+        return {"success": False, "error": "wl-copy not found. Install wl-clipboard."}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+    finally:
+        try:
+            subprocess.run(
+                ["wl-copy", "--"],
+                input=original_clipboard,
+                capture_output=True,
+                timeout=3,
+            )
+        except Exception:
+            pass
+
+
+def _child_process_env() -> JsonDict:
+    env: JsonDict = {
+        "PATH": "/usr/bin:/bin",
+        "HOME": str(Path.home()),
+    }
+
+    for key in (
+        "DBUS_SESSION_BUS_ADDRESS",
+        "DISPLAY",
+        "WAYLAND_DISPLAY",
+        "XDG_RUNTIME_DIR",
+        "XDG_SESSION_TYPE",
+    ):
+        value = os.environ.get(key)
+        if value:
+            env[key] = value
+
+    return env
+
+
 def remote_input_info() -> JsonDict:
     return _REMOTE_INPUT.info()
 
