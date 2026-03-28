@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import shutil
-
 from .desktop import accessibility, input, interaction
 
 JsonDict = dict[str, object]
@@ -9,13 +7,12 @@ JsonDict = dict[str, object]
 
 def ping() -> JsonDict:
     applications = accessibility.list_applications()["applications"]
-    screenshot_path = shutil.which("gnome-screenshot") or ""
 
     return {
         "success": True,
         "desktop_count": accessibility.desktop_count(),
         "application_count": len(applications),
-        "gnome_screenshot": screenshot_path,
+        "screenshot": input.screenshot_info(),
         "mutter_remote_desktop": input.remote_input_info(),
     }
 
