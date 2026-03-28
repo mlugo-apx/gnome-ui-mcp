@@ -527,3 +527,18 @@ def list_workspaces() -> CallToolResult:
 @mcp.tool(description="Toggle the GNOME Activities overview on or off.")
 def toggle_overview(active: bool | None = None) -> CallToolResult:
     return _run_tool(lambda: backend.toggle_overview(active=active))
+
+
+@mcp.tool(description="Start monitoring desktop notifications. Call notification_monitor_read to retrieve them.")
+def notification_monitor_start() -> CallToolResult:
+    return _run_tool(backend.notification_monitor_start)
+
+
+@mcp.tool(description="Read captured notifications since monitoring started.")
+def notification_monitor_read(clear: bool = True) -> CallToolResult:
+    return _run_tool(lambda: backend.notification_monitor_read(clear=clear))
+
+
+@mcp.tool(description="Stop monitoring desktop notifications.")
+def notification_monitor_stop() -> CallToolResult:
+    return _run_tool(backend.notification_monitor_stop)

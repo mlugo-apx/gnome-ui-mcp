@@ -5,7 +5,7 @@ import time
 from .desktop import accessibility, input, interaction
 import shutil
 
-from .desktop import accessibility, dbus, display, input, interaction, workspaces
+from .desktop import accessibility, dbus, display, input, interaction, notifications, workspaces
 
 JsonDict = dict[str, object]
 
@@ -361,3 +361,15 @@ def list_workspaces() -> JsonDict:
 
 def toggle_overview(active: bool | None = None) -> JsonDict:
     return workspaces.toggle_overview(active=active)
+
+
+def notification_monitor_start() -> JsonDict:
+    return notifications.notification_monitor_start()
+
+
+def notification_monitor_read(clear: bool = True) -> JsonDict:
+    return notifications.notification_monitor_read(clear=clear)
+
+
+def notification_monitor_stop() -> JsonDict:
+    return notifications.notification_monitor_stop()
