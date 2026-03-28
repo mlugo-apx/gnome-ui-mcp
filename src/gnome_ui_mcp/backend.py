@@ -173,6 +173,41 @@ def mouse_button_up(x: int, y: int, button: str = "left") -> JsonDict:
     return input.mouse_button_up(x, y, button=button)
 
 
+def touch_tap(x: int, y: int, hold_ms: int = 0) -> JsonDict:
+    return input.touch_tap(x, y, hold_ms=hold_ms)
+
+
+def touch_swipe(
+    start_x: int, start_y: int, end_x: int, end_y: int, duration_ms: int = 300
+) -> JsonDict:
+    return input.touch_swipe(start_x, start_y, end_x, end_y, duration_ms=duration_ms)
+
+
+def touch_pinch(
+    center_x: int,
+    center_y: int,
+    start_distance: int,
+    end_distance: int,
+    duration_ms: int = 400,
+) -> JsonDict:
+    return input.touch_pinch(
+        center_x, center_y, start_distance, end_distance, duration_ms=duration_ms
+    )
+
+
+def touch_multi_swipe(
+    start_x: int,
+    start_y: int,
+    end_x: int,
+    end_y: int,
+    fingers: int = 3,
+    duration_ms: int = 300,
+) -> JsonDict:
+    return input.touch_multi_swipe(
+        start_x, start_y, end_x, end_y, fingers=fingers, duration_ms=duration_ms
+    )
+
+
 def press_key(
     key_name: str,
     element_id: str | None = None,

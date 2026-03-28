@@ -204,6 +204,124 @@ class _MutterRemoteDesktopInput:
             "backend": "mutter-remote-desktop",
         }
 
+    def _touch_down(self, slot: int, x: float, y: float, stream_path: str) -> None:
+        self._call_session(
+            "NotifyTouchDown",
+            GLib.Variant("(sudd)", (stream_path, slot, x, y)),
+        )
+
+    def _touch_motion(self, slot: int, x: float, y: float, stream_path: str) -> None:
+        self._call_session(
+            "NotifyTouchMotion",
+            GLib.Variant("(sudd)", (stream_path, slot, x, y)),
+        )
+
+    def _touch_up(self, slot: int) -> None:
+        self._call_session("NotifyTouchUp", GLib.Variant("(u)", (slot,)))
+
+    def touch_tap(self, x: int, y: int, hold_ms: int = 0) -> JsonDict:
+        stream_path, stage_area = self._ensure_session()
+        local_x, local_y = stage_area.local_coordinates(x, y)
+
+        self._touch_down(0, local_x, local_y, stream_path)
+        if hold_ms > 0:
+            time.sleep(hold_ms / 1000)
+        self._touch_up(0)
+
+        return {"success": True, "x": x, "y": y, "backend": "mutter-remote-desktop"}
+
+    def touch_swipe(
+        self, start_x: int, start_y: int, end_x: int, end_y: int, duration_ms: int = 300
+    ) -> JsonDict:
+        stream_path, stage_area = self._ensure_session()
+        sx, sy = stage_area.local_coordinates(start_x, start_y)
+        ex, ey = stage_area.local_coordinates(end_x, end_y)
+
+        steps = max(10, duration_ms // 16)
+        step_delay = duration_ms / 1000 / steps
+
+        self._touch_down(0, sx, sy, stream_path)
+        for i in range(1, steps + 1):
+            t = i / steps
+            mx = sx + (ex - sx) * t
+            my = sy + (ey - sy) * t
+            self._touch_motion(0, mx, my, stream_path)
+            time.sleep(step_delay)
+        self._touch_up(0)
+
+        return {"success": True, "backend": "mutter-remote-desktop"}
+
+    def touch_pinch(
+        self,
+        center_x: int,
+        center_y: int,
+        start_distance: int,
+        end_distance: int,
+        duration_ms: int = 400,
+    ) -> JsonDict:
+        stream_path, stage_area = self._ensure_session()
+        cx, cy = stage_area.local_coordinates(center_x, center_y)
+
+        steps = max(10, duration_ms // 16)
+        step_delay = duration_ms / 1000 / steps
+
+        sd = float(start_distance)
+        ed = float(end_distance)
+
+        self._touch_down(0, cx - sd, cy, stream_path)
+        self._touch_down(1, cx + sd, cy, stream_path)
+
+        for i in range(1, steps + 1):
+            t = i / steps
+            d = sd + (ed - sd) * t
+            self._touch_motion(0, cx - d, cy, stream_path)
+            self._touch_motion(1, cx + d, cy, stream_path)
+            time.sleep(step_delay)
+
+        self._touch_up(0)
+        self._touch_up(1)
+
+        return {"success": True, "backend": "mutter-remote-desktop"}
+
+    def touch_multi_swipe(
+        self,
+        start_x: int,
+        start_y: int,
+        end_x: int,
+        end_y: int,
+        fingers: int = 3,
+        duration_ms: int = 300,
+    ) -> JsonDict:
+        if not 1 <= fingers <= 5:
+            msg = "fingers must be between 1 and 5"
+            raise ValueError(msg)
+
+        stream_path, stage_area = self._ensure_session()
+        sx, sy = stage_area.local_coordinates(start_x, start_y)
+        ex, ey = stage_area.local_coordinates(end_x, end_y)
+
+        steps = max(10, duration_ms // 16)
+        step_delay = duration_ms / 1000 / steps
+        spread = 20.0
+
+        for slot in range(fingers):
+            offset = (slot - (fingers - 1) / 2) * spread
+            self._touch_down(slot, sx + offset, sy, stream_path)
+
+        for i in range(1, steps + 1):
+            t = i / steps
+            mx = sx + (ex - sx) * t
+            my = sy + (ey - sy) * t
+            for slot in range(fingers):
+                offset = (slot - (fingers - 1) / 2) * spread
+                self._touch_motion(slot, mx + offset, my, stream_path)
+            time.sleep(step_delay)
+
+        for slot in range(fingers):
+            self._touch_up(slot)
+
+        return {"success": True, "fingers": fingers, "backend": "mutter-remote-desktop"}
+
     def press_key(self, key_name: str) -> JsonDict:
         keyval = _key_name_to_keyval(key_name)
 
@@ -893,6 +1011,41 @@ def key_up(key_name: str) -> JsonDict:
         result = _perform_key_up_atspi(key_name)
         result["fallback_error"] = str(exc)
         return result
+
+
+def touch_tap(x: int, y: int, hold_ms: int = 0) -> JsonDict:
+    return _REMOTE_INPUT.touch_tap(x, y, hold_ms=hold_ms)
+
+
+def touch_swipe(
+    start_x: int, start_y: int, end_x: int, end_y: int, duration_ms: int = 300
+) -> JsonDict:
+    return _REMOTE_INPUT.touch_swipe(start_x, start_y, end_x, end_y, duration_ms=duration_ms)
+
+
+def touch_pinch(
+    center_x: int,
+    center_y: int,
+    start_distance: int,
+    end_distance: int,
+    duration_ms: int = 400,
+) -> JsonDict:
+    return _REMOTE_INPUT.touch_pinch(
+        center_x, center_y, start_distance, end_distance, duration_ms=duration_ms
+    )
+
+
+def touch_multi_swipe(
+    start_x: int,
+    start_y: int,
+    end_x: int,
+    end_y: int,
+    fingers: int = 3,
+    duration_ms: int = 300,
+) -> JsonDict:
+    return _REMOTE_INPUT.touch_multi_swipe(
+        start_x, start_y, end_x, end_y, fingers=fingers, duration_ms=duration_ms
+    )
 
 
 def _perform_type_text_atspi(text: str) -> JsonDict:

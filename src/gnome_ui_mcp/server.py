@@ -302,6 +302,66 @@ def mouse_button_up(
     return _run_tool(lambda: backend.mouse_button_up(x=x, y=y, button=button))
 
 
+@mcp.tool(description="Single-finger tap at screen coordinates.")
+def touch_tap(x: int, y: int, hold_ms: int = 0) -> CallToolResult:
+    return _run_tool(lambda: backend.touch_tap(x=x, y=y, hold_ms=hold_ms))
+
+
+@mcp.tool(description="Single-finger swipe from start to end coordinates.")
+def touch_swipe(
+    start_x: int,
+    start_y: int,
+    end_x: int,
+    end_y: int,
+    duration_ms: int = 300,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.touch_swipe(
+            start_x=start_x, start_y=start_y, end_x=end_x, end_y=end_y, duration_ms=duration_ms
+        )
+    )
+
+
+@mcp.tool(description="Two-finger pinch gesture (zoom in/out) around a center point.")
+def touch_pinch(
+    center_x: int,
+    center_y: int,
+    start_distance: int,
+    end_distance: int,
+    duration_ms: int = 400,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.touch_pinch(
+            center_x=center_x,
+            center_y=center_y,
+            start_distance=start_distance,
+            end_distance=end_distance,
+            duration_ms=duration_ms,
+        )
+    )
+
+
+@mcp.tool(description="Multi-finger swipe (2-5 fingers) for system gestures.")
+def touch_multi_swipe(
+    start_x: int,
+    start_y: int,
+    end_x: int,
+    end_y: int,
+    fingers: int = 3,
+    duration_ms: int = 300,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.touch_multi_swipe(
+            start_x=start_x,
+            start_y=start_y,
+            end_x=end_x,
+            end_y=end_y,
+            fingers=fingers,
+            duration_ms=duration_ms,
+        )
+    )
+
+
 @mcp.tool(
     description=(
         "Press and release a key by GDK key name, optionally verifying the effect against a "
