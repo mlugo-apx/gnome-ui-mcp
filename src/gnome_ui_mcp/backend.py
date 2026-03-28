@@ -129,6 +129,12 @@ def scroll(
         x=x,
         y=y,
     )
+def clipboard_read(selection: str = "clipboard") -> JsonDict:
+    return input.clipboard_read(selection=selection)
+
+
+def clipboard_write(text: str, selection: str = "clipboard") -> JsonDict:
+    return input.clipboard_write(text=text, selection=selection)
 
 
 def mouse_move(x: int, y: int) -> JsonDict:
