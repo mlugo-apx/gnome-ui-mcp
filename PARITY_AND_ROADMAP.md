@@ -137,10 +137,10 @@ Researched: kwin-mcp, hyprland-mcp (alderban107), wayland-mcp (someaka), hyprmcp
 ### Phase 3: Independent capabilities (new files, Pillow-dependent grouped)
 | # | Item | Why this order | Status |
 |---|------|---------------|--------|
-| 10 | N1 — OCR hybrid (Tesseract + AT-SPI) | New desktop/ocr.py, adds pytesseract dep | TODO |
-| 11 | N6 — dconf/GSettings read/write | New file, Gio.Settings API | TODO |
-| 12 | N7 — Color/pixel sampling | Pillow-based, same dep as OCR | TODO |
-| 13 | N8 — Visual diff | Pillow + scipy, same dep chain | TODO |
+| 10 | N1 — OCR hybrid (Tesseract + AT-SPI) | New desktop/ocr.py, adds pytesseract dep | DONE |
+| 11 | N6 — dconf/GSettings read/write | New file, Gio.Settings API | DONE |
+| 12 | N7 — Color/pixel sampling | Pillow-based, same dep as OCR | DONE |
+| 13 | N8 — Visual diff | Pillow + scipy, same dep chain | DONE |
 
 ### Phase 4: Misc (trivial, no conflicts)
 | # | Item | Why this order | Status |
