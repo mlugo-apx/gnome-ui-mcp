@@ -23,7 +23,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-  "mcp==1.26.0",
+  "mcp>=1.26,<2",
 ]
 
 [project.urls]
@@ -35,6 +35,7 @@ gnome-ui-mcp = "gnome_ui_mcp.__main__:main"
 
 [dependency-groups]
 dev = [
+  "pytest>=8.0,<9",
   "ruff==0.12.12",
 ]
 
