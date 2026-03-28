@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from gnome_ui_mcp.desktop import ocr
 
 
@@ -14,9 +12,7 @@ class TestTypeIntoAtSpi:
 
     @patch("gnome_ui_mcp.desktop.ocr.input")
     @patch("gnome_ui_mcp.desktop.ocr.accessibility")
-    def test_atspi_editable_found(
-        self, mock_acc: MagicMock, mock_input: MagicMock
-    ) -> None:
+    def test_atspi_editable_found(self, mock_acc: MagicMock, mock_input: MagicMock) -> None:
         """When AT-SPI finds an editable element, focus it and type."""
         mock_acc.find_elements.return_value = {
             "success": True,
@@ -117,9 +113,7 @@ class TestTypeIntoSubmit:
 
     @patch("gnome_ui_mcp.desktop.ocr.input")
     @patch("gnome_ui_mcp.desktop.ocr.accessibility")
-    def test_submit_presses_return(
-        self, mock_acc: MagicMock, mock_input: MagicMock
-    ) -> None:
+    def test_submit_presses_return(self, mock_acc: MagicMock, mock_input: MagicMock) -> None:
         mock_acc.find_elements.return_value = {
             "success": True,
             "matches": [

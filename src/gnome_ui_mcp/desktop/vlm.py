@@ -45,10 +45,12 @@ def _build_openrouter_payload(
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
     content: list[JsonDict] = []
     for img in images_b64:
-        content.append({
-            "type": "image_url",
-            "image_url": {"url": f"data:image/png;base64,{img}"},
-        })
+        content.append(
+            {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{img}"},
+            }
+        )
     content.append({"type": "text", "text": prompt})
 
     payload = {
@@ -71,10 +73,12 @@ def _build_anthropic_payload(
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     content: list[JsonDict] = []
     for img in images_b64:
-        content.append({
-            "type": "image",
-            "source": {"type": "base64", "media_type": "image/png", "data": img},
-        })
+        content.append(
+            {
+                "type": "image",
+                "source": {"type": "base64", "media_type": "image/png", "data": img},
+            }
+        )
     content.append({"type": "text", "text": prompt})
 
     payload = {

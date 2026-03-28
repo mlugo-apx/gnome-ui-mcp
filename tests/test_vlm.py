@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import base64
 from unittest.mock import MagicMock, mock_open, patch
-
-import pytest
 
 from gnome_ui_mcp.desktop import vlm
 
@@ -48,9 +45,7 @@ class TestAnalyzeScreenshot:
     ) -> None:
         mock_input.screenshot.return_value = {"success": True, "path": "/tmp/shot.png"}
         mock_response = MagicMock()
-        mock_response.read.return_value = (
-            b'{"content":[{"type":"text","text":"GNOME desktop"}]}'
-        )
+        mock_response.read.return_value = b'{"content":[{"type":"text","text":"GNOME desktop"}]}'
         mock_response.__enter__ = lambda s: s
         mock_response.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_response
@@ -72,9 +67,7 @@ class TestAnalyzeScreenshot:
     ) -> None:
         mock_input.screenshot.return_value = {"success": True, "path": "/tmp/shot.png"}
         mock_response = MagicMock()
-        mock_response.read.return_value = (
-            b'{"message":{"content":"Some text"}}'
-        )
+        mock_response.read.return_value = b'{"message":{"content":"Some text"}}'
         mock_response.__enter__ = lambda s: s
         mock_response.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_response
@@ -136,16 +129,12 @@ class TestCompareScreenshots:
         mock_urlopen: MagicMock,
     ) -> None:
         mock_response = MagicMock()
-        mock_response.read.return_value = (
-            b'{"choices":[{"message":{"content":"Colors differ"}}]}'
-        )
+        mock_response.read.return_value = b'{"choices":[{"message":{"content":"Colors differ"}}]}'
         mock_response.__enter__ = lambda s: s
         mock_response.__exit__ = MagicMock(return_value=False)
         mock_urlopen.return_value = mock_response
 
-        result = vlm.compare_screenshots(
-            "/tmp/a.png", "/tmp/b.png", prompt="Compare colors"
-        )
+        result = vlm.compare_screenshots("/tmp/a.png", "/tmp/b.png", prompt="Compare colors")
         assert result["success"] is True
         assert result["analysis"] == "Colors differ"
 
