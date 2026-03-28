@@ -145,13 +145,13 @@ Researched: kwin-mcp, hyprland-mcp (alderban107), wayland-mcp (someaka), hyprmcp
 ### Phase 4: Misc (trivial, no conflicts)
 | # | Item | Why this order | Status |
 |---|------|---------------|--------|
-| 14 | G9 — Wayland info | Shells out to wayland-info | TODO |
-| 15 | G7 — App log capture | Modifies feat/launch-app branch only | TODO |
+| 14 | G9 — Wayland info | Shells out to wayland-info | DONE |
+| 15 | G7 — App log capture | Modifies feat/launch-app branch only | DONE |
 
 ### Phase 5: Modify existing tools (MUST be last — touches interaction.py action functions)
 | # | Item | Why this order | Status |
 |---|------|---------------|--------|
-| 16 | G5 — Screenshot burst on actions | Adds screenshot_after_ms to click_element, activate_element, press_key, click_at. Must be last so all action tools exist first. | TODO |
+| 16 | G5 — Screenshot burst on actions | Adds screenshot_after_ms helper. Must be last so all action tools exist first. | DONE |
 
 ---
 
