@@ -477,3 +477,26 @@ def wait_for_element_gone(
             within_popup=within_popup,
         )
     )
+
+
+@mcp.tool(description="Call any D-Bus method on the session bus. Returns the unpacked result.")
+def dbus_call(
+    bus_name: str,
+    object_path: str,
+    interface: str,
+    method: str,
+    signature: str | None = None,
+    args: list | None = None,
+    timeout_ms: int = 5000,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.dbus_call(
+            bus_name=bus_name,
+            object_path=object_path,
+            interface=interface,
+            method=method,
+            signature=signature,
+            args=args,
+            timeout_ms=timeout_ms,
+        )
+    )

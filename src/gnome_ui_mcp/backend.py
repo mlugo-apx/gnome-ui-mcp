@@ -3,6 +3,9 @@ from __future__ import annotations
 import time
 
 from .desktop import accessibility, input, interaction
+import shutil
+
+from .desktop import accessibility, dbus, input, interaction
 
 JsonDict = dict[str, object]
 
@@ -317,4 +320,24 @@ def wait_for_element_gone(
         bounds_only=bounds_only,
         within_element_id=within_element_id,
         within_popup=within_popup,
+    )
+
+
+def dbus_call(
+    bus_name: str,
+    object_path: str,
+    interface: str,
+    method: str,
+    signature: str | None = None,
+    args: list | None = None,
+    timeout_ms: int = 5000,
+) -> JsonDict:
+    return dbus.dbus_call(
+        bus_name=bus_name,
+        object_path=object_path,
+        interface=interface,
+        method=method,
+        signature=signature,
+        args=args,
+        timeout_ms=timeout_ms,
     )
