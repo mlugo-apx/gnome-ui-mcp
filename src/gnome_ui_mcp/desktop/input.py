@@ -735,11 +735,15 @@ def screenshot_info() -> JsonDict:
 
 def screenshot(filename: str | None = None) -> JsonDict:
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    output = (
-        Path(filename).expanduser()
-        if filename
-        else CACHE_DIR / f"screenshot-{int(time.time() * 1000)}.png"
-    )
+    if filename:
+        output = Path(filename).expanduser().resolve()
+        if not str(output).startswith(str(CACHE_DIR.resolve())):
+            return {
+                "success": False,
+                "error": f"Path must be within {CACHE_DIR}",
+            }
+    else:
+        output = CACHE_DIR / f"screenshot-{int(time.time() * 1000)}.png"
     output.parent.mkdir(parents=True, exist_ok=True)
 
     try:
