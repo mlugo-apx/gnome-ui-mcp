@@ -530,3 +530,22 @@ def gsettings_list_keys(schema: str) -> CallToolResult:
 @mcp.tool(description="Reset a GNOME setting to its default value.")
 def gsettings_reset(schema: str, key: str) -> CallToolResult:
     return _run_tool(lambda: backend.gsettings_reset(schema=schema, key=key))
+
+
+@mcp.tool(description="Get the pixel color at screen coordinates. Takes a screenshot first.")
+def get_pixel_color(x: int, y: int) -> CallToolResult:
+    return _run_tool(lambda: backend.get_pixel_color(x=x, y=y))
+
+
+@mcp.tool(description="Get the average color of a screen region.")
+def get_region_color(x: int, y: int, width: int, height: int) -> CallToolResult:
+    return _run_tool(lambda: backend.get_region_color(x=x, y=y, width=width, height=height))
+
+
+@mcp.tool(description="Compare two screenshots and return changed regions.")
+def visual_diff(image_path_1: str, image_path_2: str, threshold: int = 30) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.visual_diff(
+            image_path_1=image_path_1, image_path_2=image_path_2, threshold=threshold
+        )
+    )

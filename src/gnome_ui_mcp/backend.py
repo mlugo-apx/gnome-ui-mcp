@@ -5,7 +5,7 @@ import time
 from .desktop import accessibility, input, interaction
 import shutil
 
-from .desktop import accessibility, gsettings, input, interaction, ocr
+from .desktop import accessibility, gsettings, input, interaction, ocr, visual
 
 JsonDict = dict[str, object]
 
@@ -358,3 +358,14 @@ def gsettings_list_keys(schema: str) -> JsonDict:
 
 def gsettings_reset(schema: str, key: str) -> JsonDict:
     return gsettings.gsettings_reset(schema=schema, key=key)
+
+def get_pixel_color(x: int, y: int) -> JsonDict:
+    return visual.get_pixel_color(x=x, y=y)
+
+
+def get_region_color(x: int, y: int, width: int, height: int) -> JsonDict:
+    return visual.get_region_color(x=x, y=y, width=width, height=height)
+
+
+def visual_diff(image_path_1: str, image_path_2: str, threshold: int = 30) -> JsonDict:
+    return visual.visual_diff(image_path_1=image_path_1, image_path_2=image_path_2, threshold=threshold)
