@@ -264,6 +264,16 @@ def type_text(text: str) -> CallToolResult:
     return _run_tool(lambda: backend.type_text(text=text))
 
 
+@mcp.tool(description="Press and hold a key without releasing it. Use key_up to release.")
+def key_down(key_name: str) -> CallToolResult:
+    return _run_tool(lambda: backend.key_down(key_name=key_name))
+
+
+@mcp.tool(description="Release a previously held key.")
+def key_up(key_name: str) -> CallToolResult:
+    return _run_tool(lambda: backend.key_up(key_name=key_name))
+
+
 @mcp.tool(
     description=(
         "Press and release a key by GDK key name, optionally verifying the effect against a "

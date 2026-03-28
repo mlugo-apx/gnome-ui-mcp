@@ -79,6 +79,7 @@ class _MutterRemoteDesktopInput:
         self._stream_path: str | None = None
         self._stage_area: _StageArea | None = None
         self._started = False
+        self._held_keys: set[str] = set()
         atexit.register(self.close)
 
     def info(self) -> JsonDict:
@@ -154,6 +155,38 @@ class _MutterRemoteDesktopInput:
         self._ensure_session()
         self._call_session("NotifyKeyboardKeysym", GLib.Variant("(ub)", (keyval, True)))
         self._call_session("NotifyKeyboardKeysym", GLib.Variant("(ub)", (keyval, False)))
+
+        return {
+            "success": True,
+            "key_name": key_name,
+            "keyval": int(keyval),
+            "backend": "mutter-remote-desktop",
+        }
+
+    def key_down(self, key_name: str) -> JsonDict:
+        keyval = _key_name_to_keyval(key_name)
+
+        self._ensure_session()
+        self._call_session("NotifyKeyboardKeysym", GLib.Variant("(ub)", (keyval, True)))
+        self._held_keys.add(key_name)
+
+        return {
+            "success": True,
+            "key_name": key_name,
+            "keyval": int(keyval),
+            "backend": "mutter-remote-desktop",
+        }
+
+    def key_up(self, key_name: str) -> JsonDict:
+        if key_name not in self._held_keys:
+            msg = f"Key {key_name!r} is not currently held"
+            raise ValueError(msg)
+
+        keyval = _key_name_to_keyval(key_name)
+
+        self._ensure_session()
+        self._call_session("NotifyKeyboardKeysym", GLib.Variant("(ub)", (keyval, False)))
+        self._held_keys.discard(key_name)
 
         return {
             "success": True,
@@ -254,6 +287,17 @@ class _MutterRemoteDesktopInput:
     def close(self) -> None:
         with self._lock:
             if self._rd_session is not None and self._started:
+                for key_name in list(self._held_keys):
+                    try:
+                        keyval = _key_name_to_keyval(key_name)
+                        self._call_session(
+                            "NotifyKeyboardKeysym",
+                            GLib.Variant("(ub)", (keyval, False)),
+                        )
+                    except Exception:
+                        pass
+                self._held_keys.clear()
+
                 try:
                     self._rd_session.call_sync("Stop", None, Gio.DBusCallFlags.NONE, -1, None)
                 except Exception:
@@ -692,6 +736,17 @@ def _perform_key_combo_atspi(
         "success": True,
         "modifier_keyvals": modifier_keyvals,
         "principal_keyval": principal_keyval,
+def _perform_key_down_atspi(key_name: str) -> JsonDict:
+    try:
+        keyval = _key_name_to_keyval(key_name)
+    except ValueError as exc:
+        return {"success": False, "error": str(exc)}
+
+    success = Atspi.generate_keyboard_event(keyval, key_name, Atspi.KeySynthType.PRESS)
+    return {
+        "success": bool(success),
+        "key_name": key_name,
+        "keyval": int(keyval),
         "backend": "atspi",
     }
 
@@ -702,6 +757,35 @@ def key_combo(combo: str) -> JsonDict:
         return _REMOTE_INPUT.press_key_combo(modifier_keyvals, principal_keyval)
     except Exception as exc:
         result = _perform_key_combo_atspi(modifier_keyvals, principal_keyval)
+def _perform_key_up_atspi(key_name: str) -> JsonDict:
+    try:
+        keyval = _key_name_to_keyval(key_name)
+    except ValueError as exc:
+        return {"success": False, "error": str(exc)}
+
+    success = Atspi.generate_keyboard_event(keyval, key_name, Atspi.KeySynthType.RELEASE)
+    return {
+        "success": bool(success),
+        "key_name": key_name,
+        "keyval": int(keyval),
+        "backend": "atspi",
+    }
+
+
+def key_down(key_name: str) -> JsonDict:
+    try:
+        return _REMOTE_INPUT.key_down(key_name)
+    except Exception as exc:
+        result = _perform_key_down_atspi(key_name)
+        result["fallback_error"] = str(exc)
+        return result
+
+
+def key_up(key_name: str) -> JsonDict:
+    try:
+        return _REMOTE_INPUT.key_up(key_name)
+    except Exception as exc:
+        result = _perform_key_up_atspi(key_name)
         result["fallback_error"] = str(exc)
         return result
 

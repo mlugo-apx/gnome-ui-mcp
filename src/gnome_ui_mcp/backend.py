@@ -153,6 +153,14 @@ def type_text(text: str) -> JsonDict:
     return input.type_text(text=text)
 
 
+def key_down(key_name: str) -> JsonDict:
+    return input.key_down(key_name)
+
+
+def key_up(key_name: str) -> JsonDict:
+    return input.key_up(key_name)
+
+
 def press_key(
     key_name: str,
     element_id: str | None = None,
