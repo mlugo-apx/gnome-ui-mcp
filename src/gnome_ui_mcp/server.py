@@ -477,3 +477,52 @@ def wait_for_element_gone(
             within_popup=within_popup,
         )
     )
+
+
+@mcp.tool(description="Close the currently focused window via Alt+F4.")
+def close_window() -> CallToolResult:
+    return _run_tool(backend.close_window)
+
+
+@mcp.tool(
+    description=(
+        "Move the focused window by a pixel offset using GNOME keyboard move mode "
+        "(Alt+F7 then arrow keys). Each arrow press moves ~10px."
+    )
+)
+def move_window(dx: int, dy: int) -> CallToolResult:
+    return _run_tool(lambda: backend.move_window(dx=dx, dy=dy))
+
+
+@mcp.tool(
+    description=(
+        "Resize the focused window by a pixel delta using GNOME keyboard resize mode "
+        "(Alt+F8 then arrow keys). Each arrow press resizes ~10px."
+    )
+)
+def resize_window(dw: int, dh: int) -> CallToolResult:
+    return _run_tool(lambda: backend.resize_window(dw=dw, dh=dh))
+
+
+@mcp.tool(
+    description=(
+        "Snap the focused window to a screen position. "
+        "Valid positions: maximize, restore, left, right."
+    )
+)
+def snap_window(
+    position: Literal["maximize", "restore", "left", "right"],
+) -> CallToolResult:
+    return _run_tool(lambda: backend.snap_window(position=position))
+
+
+@mcp.tool(
+    description=(
+        "Toggle a window state. "
+        "Valid states: fullscreen (F11), maximize (Alt+F10), minimize (Super+h)."
+    )
+)
+def toggle_window_state(
+    state: Literal["fullscreen", "maximize", "minimize"],
+) -> CallToolResult:
+    return _run_tool(lambda: backend.toggle_window_state(state=state))

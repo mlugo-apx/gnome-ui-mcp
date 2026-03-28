@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from .desktop import accessibility, input, interaction
+from .desktop import accessibility, input, interaction, window_management
 
 JsonDict = dict[str, object]
 
@@ -318,3 +318,23 @@ def wait_for_element_gone(
         within_element_id=within_element_id,
         within_popup=within_popup,
     )
+
+
+def close_window() -> JsonDict:
+    return window_management.close_window()
+
+
+def move_window(dx: int, dy: int) -> JsonDict:
+    return window_management.move_window(dx=dx, dy=dy)
+
+
+def resize_window(dw: int, dh: int) -> JsonDict:
+    return window_management.resize_window(dw=dw, dh=dh)
+
+
+def snap_window(position: str) -> JsonDict:
+    return window_management.snap_window(position=position)
+
+
+def toggle_window_state(state: str) -> JsonDict:
+    return window_management.toggle_window_state(state=state)
