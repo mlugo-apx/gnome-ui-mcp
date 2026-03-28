@@ -80,6 +80,7 @@ class _MutterRemoteDesktopInput:
         self._stage_area: _StageArea | None = None
         self._started = False
         self._held_keys: set[str] = set()
+        self._held_buttons: set[str] = set()
         atexit.register(self.close)
 
     def info(self) -> JsonDict:
@@ -147,6 +148,60 @@ class _MutterRemoteDesktopInput:
             "y": y,
             "backend": "mutter-remote-desktop",
             "stream_path": stream_path,
+        }
+
+    def button_down(self, x: int, y: int, *, button: str = "left") -> JsonDict:
+        button_code = REMOTE_POINTER_BUTTONS.get(button.lower())
+        if button_code is None:
+            msg = "button must be left, middle, or right"
+            raise ValueError(msg)
+
+        stream_path, stage_area = self._ensure_session()
+        local_x, local_y = stage_area.local_coordinates(x, y)
+
+        self._call_session(
+            "NotifyPointerMotionAbsolute",
+            GLib.Variant("(sdd)", (stream_path, local_x, local_y)),
+        )
+        time.sleep(0.02)
+        self._call_session("NotifyPointerButton", GLib.Variant("(ib)", (button_code, True)))
+        self._held_buttons.add(button.lower())
+
+        return {
+            "success": True,
+            "x": x,
+            "y": y,
+            "button": button.lower(),
+            "backend": "mutter-remote-desktop",
+        }
+
+    def button_up(self, x: int, y: int, *, button: str = "left") -> JsonDict:
+        normalized = button.lower()
+        if normalized not in self._held_buttons:
+            msg = f"Button {button!r} is not currently held"
+            raise ValueError(msg)
+
+        button_code = REMOTE_POINTER_BUTTONS.get(normalized)
+        if button_code is None:
+            msg = "button must be left, middle, or right"
+            raise ValueError(msg)
+
+        stream_path, stage_area = self._ensure_session()
+        local_x, local_y = stage_area.local_coordinates(x, y)
+
+        self._call_session(
+            "NotifyPointerMotionAbsolute",
+            GLib.Variant("(sdd)", (stream_path, local_x, local_y)),
+        )
+        self._call_session("NotifyPointerButton", GLib.Variant("(ib)", (button_code, False)))
+        self._held_buttons.discard(normalized)
+
+        return {
+            "success": True,
+            "x": x,
+            "y": y,
+            "button": normalized,
+            "backend": "mutter-remote-desktop",
         }
 
     def press_key(self, key_name: str) -> JsonDict:
@@ -297,6 +352,18 @@ class _MutterRemoteDesktopInput:
                     except Exception:
                         pass
                 self._held_keys.clear()
+
+                for button_name in list(self._held_buttons):
+                    try:
+                        button_code = REMOTE_POINTER_BUTTONS.get(button_name)
+                        if button_code is not None:
+                            self._call_session(
+                                "NotifyPointerButton",
+                                GLib.Variant("(ib)", (button_code, False)),
+                            )
+                    except Exception:
+                        pass
+                self._held_buttons.clear()
 
                 try:
                     self._rd_session.call_sync("Stop", None, Gio.DBusCallFlags.NONE, -1, None)
@@ -621,6 +688,44 @@ def perform_scroll(
         return _REMOTE_INPUT.scroll(direction, clicks, x, y)
     except Exception as exc:
         result = _perform_scroll_atspi(direction, clicks, x, y)
+ATSPI_BUTTON_PRESS_MAP = {"left": "b1p", "middle": "b2p", "right": "b3p"}
+ATSPI_BUTTON_RELEASE_MAP = {"left": "b1r", "middle": "b2r", "right": "b3r"}
+
+
+def _perform_button_down_atspi(x: int, y: int, *, button: str = "left") -> JsonDict:
+    event_name = ATSPI_BUTTON_PRESS_MAP.get(button.lower())
+    if event_name is None:
+        msg = "button must be left, middle, or right"
+        raise ValueError(msg)
+
+    Atspi.generate_mouse_event(x, y, event_name)
+    return {"success": True, "x": x, "y": y, "button": button.lower(), "backend": "atspi"}
+
+
+def _perform_button_up_atspi(x: int, y: int, *, button: str = "left") -> JsonDict:
+    event_name = ATSPI_BUTTON_RELEASE_MAP.get(button.lower())
+    if event_name is None:
+        msg = "button must be left, middle, or right"
+        raise ValueError(msg)
+
+    Atspi.generate_mouse_event(x, y, event_name)
+    return {"success": True, "x": x, "y": y, "button": button.lower(), "backend": "atspi"}
+
+
+def mouse_button_down(x: int, y: int, *, button: str = "left") -> JsonDict:
+    try:
+        return _REMOTE_INPUT.button_down(x, y, button=button)
+    except Exception as exc:
+        result = _perform_button_down_atspi(x, y, button=button)
+        result["fallback_error"] = str(exc)
+        return result
+
+
+def mouse_button_up(x: int, y: int, *, button: str = "left") -> JsonDict:
+    try:
+        return _REMOTE_INPUT.button_up(x, y, button=button)
+    except Exception as exc:
+        result = _perform_button_up_atspi(x, y, button=button)
         result["fallback_error"] = str(exc)
         return result
 

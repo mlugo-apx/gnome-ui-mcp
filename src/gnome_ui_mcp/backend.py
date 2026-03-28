@@ -161,6 +161,14 @@ def key_up(key_name: str) -> JsonDict:
     return input.key_up(key_name)
 
 
+def mouse_button_down(x: int, y: int, button: str = "left") -> JsonDict:
+    return input.mouse_button_down(x, y, button=button)
+
+
+def mouse_button_up(x: int, y: int, button: str = "left") -> JsonDict:
+    return input.mouse_button_up(x, y, button=button)
+
+
 def press_key(
     key_name: str,
     element_id: str | None = None,

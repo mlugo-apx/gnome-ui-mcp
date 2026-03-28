@@ -274,6 +274,24 @@ def key_up(key_name: str) -> CallToolResult:
     return _run_tool(lambda: backend.key_up(key_name=key_name))
 
 
+@mcp.tool(description="Press and hold a mouse button at coordinates without releasing.")
+def mouse_button_down(
+    x: int,
+    y: int,
+    button: Literal["left", "middle", "right"] = "left",
+) -> CallToolResult:
+    return _run_tool(lambda: backend.mouse_button_down(x=x, y=y, button=button))
+
+
+@mcp.tool(description="Release a previously held mouse button at coordinates.")
+def mouse_button_up(
+    x: int,
+    y: int,
+    button: Literal["left", "middle", "right"] = "left",
+) -> CallToolResult:
+    return _run_tool(lambda: backend.mouse_button_up(x=x, y=y, button=button))
+
+
 @mcp.tool(
     description=(
         "Press and release a key by GDK key name, optionally verifying the effect against a "
