@@ -5,7 +5,7 @@ import time
 from .desktop import accessibility, input, interaction
 import shutil
 
-from .desktop import accessibility, input, interaction, ocr
+from .desktop import accessibility, gsettings, input, interaction, ocr
 
 JsonDict = dict[str, object]
 
@@ -343,3 +343,18 @@ def find_text_ocr(
 
 def click_text_ocr(target: str, button: str = "left") -> JsonDict:
     return ocr.click_text_ocr(target=target, button=button)
+
+def gsettings_get(schema: str, key: str) -> JsonDict:
+    return gsettings.gsettings_get(schema=schema, key=key)
+
+
+def gsettings_set(schema: str, key: str, value: object) -> JsonDict:
+    return gsettings.gsettings_set(schema=schema, key=key, value=value)
+
+
+def gsettings_list_keys(schema: str) -> JsonDict:
+    return gsettings.gsettings_list_keys(schema=schema)
+
+
+def gsettings_reset(schema: str, key: str) -> JsonDict:
+    return gsettings.gsettings_reset(schema=schema, key=key)

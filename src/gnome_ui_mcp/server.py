@@ -510,3 +510,23 @@ def click_text_ocr(
     button: Literal["left", "middle", "right"] = "left",
 ) -> CallToolResult:
     return _run_tool(lambda: backend.click_text_ocr(target=target, button=button))
+
+
+@mcp.tool(description="Read a GNOME setting value.")
+def gsettings_get(schema: str, key: str) -> CallToolResult:
+    return _run_tool(lambda: backend.gsettings_get(schema=schema, key=key))
+
+
+@mcp.tool(description="Write a GNOME setting value.")
+def gsettings_set(schema: str, key: str, value: str | int | float | bool) -> CallToolResult:
+    return _run_tool(lambda: backend.gsettings_set(schema=schema, key=key, value=value))
+
+
+@mcp.tool(description="List all keys in a GSettings schema.")
+def gsettings_list_keys(schema: str) -> CallToolResult:
+    return _run_tool(lambda: backend.gsettings_list_keys(schema=schema))
+
+
+@mcp.tool(description="Reset a GNOME setting to its default value.")
+def gsettings_reset(schema: str, key: str) -> CallToolResult:
+    return _run_tool(lambda: backend.gsettings_reset(schema=schema, key=key))
