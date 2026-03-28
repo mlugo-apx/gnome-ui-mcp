@@ -27,14 +27,16 @@ def _filter_words(raw_data: dict, min_conf: int = 30) -> list[JsonDict]:
         conf = int(raw_data["conf"][i])
         if not text or conf < min_conf:
             continue
-        words.append({
-            "text": text,
-            "x": int(raw_data["left"][i]),
-            "y": int(raw_data["top"][i]),
-            "width": int(raw_data["width"][i]),
-            "height": int(raw_data["height"][i]),
-            "confidence": conf,
-        })
+        words.append(
+            {
+                "text": text,
+                "x": int(raw_data["left"][i]),
+                "y": int(raw_data["top"][i]),
+                "width": int(raw_data["width"][i]),
+                "height": int(raw_data["height"][i]),
+                "confidence": conf,
+            }
+        )
     return words
 
 
@@ -46,15 +48,17 @@ def _find_text_in_words(words: list[JsonDict], target: str) -> list[JsonDict]:
     if len(target_parts) <= 1:
         for w in words:
             if target_lower in w["text"].lower():
-                matches.append({
-                    "text": w["text"],
-                    "x": w["x"],
-                    "y": w["y"],
-                    "width": w["width"],
-                    "height": w["height"],
-                    "center_x": w["x"] + w["width"] // 2,
-                    "center_y": w["y"] + w["height"] // 2,
-                })
+                matches.append(
+                    {
+                        "text": w["text"],
+                        "x": w["x"],
+                        "y": w["y"],
+                        "width": w["width"],
+                        "height": w["height"],
+                        "center_x": w["x"] + w["width"] // 2,
+                        "center_y": w["y"] + w["height"] // 2,
+                    }
+                )
         return matches
 
     for i in range(len(words) - len(target_parts) + 1):
@@ -65,18 +69,22 @@ def _find_text_in_words(words: list[JsonDict], target: str) -> list[JsonDict]:
             x = first["x"]
             y = min(words[i + j]["y"] for j in range(len(target_parts)))
             right = last["x"] + last["width"]
-            bottom = max(words[i + j]["y"] + words[i + j]["height"] for j in range(len(target_parts)))
+            bottom = max(
+                words[i + j]["y"] + words[i + j]["height"] for j in range(len(target_parts))
+            )
             width = right - x
             height = bottom - y
-            matches.append({
-                "text": candidate,
-                "x": x,
-                "y": y,
-                "width": width,
-                "height": height,
-                "center_x": x + width // 2,
-                "center_y": y + height // 2,
-            })
+            matches.append(
+                {
+                    "text": candidate,
+                    "x": x,
+                    "y": y,
+                    "width": width,
+                    "height": height,
+                    "center_x": x + width // 2,
+                    "center_y": y + height // 2,
+                }
+            )
     return matches
 
 
@@ -153,6 +161,7 @@ def click_text_ocr(target: str, button: str = "left") -> JsonDict:
 
     match = matches[0]
     from . import interaction
+
     click_result = interaction.click_at(x=match["center_x"], y=match["center_y"], button=button)
     click_result["ocr_match"] = match
     return click_result

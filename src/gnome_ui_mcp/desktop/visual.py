@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
-from PIL import Image, ImageChops
+from PIL import Image
 from scipy import ndimage
 
 from . import input
@@ -112,13 +112,15 @@ def visual_diff(
         ys, xs = np.where(labeled == i)
         if len(xs) < 5:
             continue
-        regions.append({
-            "x": int(xs.min()),
-            "y": int(ys.min()),
-            "width": int(xs.max() - xs.min() + 1),
-            "height": int(ys.max() - ys.min() + 1),
-            "pixel_count": len(xs),
-        })
+        regions.append(
+            {
+                "x": int(xs.min()),
+                "y": int(ys.min()),
+                "width": int(xs.max() - xs.min() + 1),
+                "height": int(ys.max() - ys.min() + 1),
+                "pixel_count": len(xs),
+            }
+        )
 
     return {
         "success": True,

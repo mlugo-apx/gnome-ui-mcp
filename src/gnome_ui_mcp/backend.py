@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import time
 
-from .desktop import accessibility, input, interaction
-import shutil
-
 from .desktop import accessibility, gsettings, input, interaction, ocr, visual
 
 JsonDict = dict[str, object]
@@ -322,6 +319,7 @@ def wait_for_element_gone(
         within_popup=within_popup,
     )
 
+
 def ocr_screen(
     x: int | None = None,
     y: int | None = None,
@@ -344,6 +342,7 @@ def find_text_ocr(
 def click_text_ocr(target: str, button: str = "left") -> JsonDict:
     return ocr.click_text_ocr(target=target, button=button)
 
+
 def gsettings_get(schema: str, key: str) -> JsonDict:
     return gsettings.gsettings_get(schema=schema, key=key)
 
@@ -359,6 +358,7 @@ def gsettings_list_keys(schema: str) -> JsonDict:
 def gsettings_reset(schema: str, key: str) -> JsonDict:
     return gsettings.gsettings_reset(schema=schema, key=key)
 
+
 def get_pixel_color(x: int, y: int) -> JsonDict:
     return visual.get_pixel_color(x=x, y=y)
 
@@ -368,4 +368,6 @@ def get_region_color(x: int, y: int, width: int, height: int) -> JsonDict:
 
 
 def visual_diff(image_path_1: str, image_path_2: str, threshold: int = 30) -> JsonDict:
-    return visual.visual_diff(image_path_1=image_path_1, image_path_2=image_path_2, threshold=threshold)
+    return visual.visual_diff(
+        image_path_1=image_path_1, image_path_2=image_path_2, threshold=threshold
+    )

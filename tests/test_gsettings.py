@@ -13,6 +13,7 @@ class TestGsettingsGet:
             mock_settings = MagicMock()
             mock_gio.Settings.return_value = mock_settings
             from gi.repository import GLib
+
             mock_settings.get_value.return_value = GLib.Variant("s", "prefer-dark")
 
             result = gs_mod.gsettings_get("org.gnome.desktop.interface", "color-scheme")
@@ -35,6 +36,7 @@ class TestGsettingsSet:
             mock_settings = MagicMock()
             mock_gio.Settings.return_value = mock_settings
             from gi.repository import GLib
+
             mock_settings.get_value.return_value = GLib.Variant("s", "prefer-dark")
             mock_settings.set_value.return_value = True
 

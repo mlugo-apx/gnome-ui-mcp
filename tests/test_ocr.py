@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from PIL import Image
 
@@ -126,7 +126,15 @@ class TestOcrScreen:
         assert "hello" in result["text"]
 
     def test_region_uses_screenshot_area(self) -> None:
-        mock_data = {"level": [], "left": [], "top": [], "width": [], "height": [], "conf": [], "text": []}
+        mock_data = {
+            "level": [],
+            "left": [],
+            "top": [],
+            "width": [],
+            "height": [],
+            "conf": [],
+            "text": [],
+        }
         with (
             patch("gnome_ui_mcp.desktop.ocr.input") as mock_input,
             patch("gnome_ui_mcp.desktop.ocr.pytesseract") as mock_tess,
