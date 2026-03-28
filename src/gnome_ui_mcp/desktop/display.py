@@ -65,25 +65,32 @@ def list_monitors() -> JsonDict:
         refresh_rate = 0.0
         if modes:
             first_mode = modes[0]
-            _mode_id, width, height, refresh_rate = first_mode[0], first_mode[1], first_mode[2], first_mode[3]
+            _mode_id, width, height, refresh_rate = (
+                first_mode[0],
+                first_mode[1],
+                first_mode[2],
+                first_mode[3],
+            )
 
         display_name = properties.get("display-name", "")
         is_builtin = properties.get("is-builtin", False)
 
         logical = logical_lookup.get(connector, {})
 
-        monitors.append({
-            "connector": connector,
-            "manufacturer": manufacturer,
-            "model": model,
-            "serial": serial,
-            "display_name": display_name,
-            "resolution": f"{width}x{height}",
-            "refresh_rate_hz": round(float(refresh_rate), 1),
-            "scale": logical.get("scale", 1.0),
-            "position": {"x": logical.get("x", 0), "y": logical.get("y", 0)},
-            "is_primary": logical.get("is_primary", False),
-            "is_builtin": bool(is_builtin),
-        })
+        monitors.append(
+            {
+                "connector": connector,
+                "manufacturer": manufacturer,
+                "model": model,
+                "serial": serial,
+                "display_name": display_name,
+                "resolution": f"{width}x{height}",
+                "refresh_rate_hz": round(float(refresh_rate), 1),
+                "scale": logical.get("scale", 1.0),
+                "position": {"x": logical.get("x", 0), "y": logical.get("y", 0)},
+                "is_primary": logical.get("is_primary", False),
+                "is_builtin": bool(is_builtin),
+            }
+        )
 
     return {"success": True, "monitors": monitors, "monitor_count": len(monitors)}

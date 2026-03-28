@@ -81,12 +81,14 @@ class NotificationMonitor:
         try:
             unpacked = params.unpack()
             app_name, _replaces_id, _icon, summary, body, _actions, _hints, _timeout = unpacked
-            self._notifications.append({
-                "app_name": str(app_name),
-                "summary": str(summary),
-                "body": str(body),
-                "timestamp": time.time(),
-            })
+            self._notifications.append(
+                {
+                    "app_name": str(app_name),
+                    "summary": str(summary),
+                    "body": str(body),
+                    "timestamp": time.time(),
+                }
+            )
         except Exception:
             pass
 

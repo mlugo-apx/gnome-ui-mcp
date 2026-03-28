@@ -53,8 +53,18 @@ class TestListWorkspaces:
 
         # Mock Shell.Introspect.GetWindows return
         windows = {
-            1: {"title": GLib.Variant("s", "Terminal"), "app-id": GLib.Variant("s", "org.gnome.Terminal"), "wm-class": GLib.Variant("s", "Gnome-terminal"), "workspace-index": GLib.Variant("i", 0)},
-            2: {"title": GLib.Variant("s", "Firefox"), "app-id": GLib.Variant("s", "firefox"), "wm-class": GLib.Variant("s", "firefox"), "workspace-index": GLib.Variant("i", 1)},
+            1: {
+                "title": GLib.Variant("s", "Terminal"),
+                "app-id": GLib.Variant("s", "org.gnome.Terminal"),
+                "wm-class": GLib.Variant("s", "Gnome-terminal"),
+                "workspace-index": GLib.Variant("i", 0),
+            },
+            2: {
+                "title": GLib.Variant("s", "Firefox"),
+                "app-id": GLib.Variant("s", "firefox"),
+                "wm-class": GLib.Variant("s", "firefox"),
+                "workspace-index": GLib.Variant("i", 1),
+            },
         }
         mock_result = GLib.Variant("(a{ta{sv}})", (windows,))
 

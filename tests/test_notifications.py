@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 from gnome_ui_mcp.desktop import notifications as notif_mod
 
@@ -23,11 +23,13 @@ class TestNotificationMonitor:
     def test_read_returns_captured_notifications(self) -> None:
         monitor = notif_mod.NotificationMonitor()
         monitor._running = True
-        monitor._notifications.append({
-            "app_name": "Firefox",
-            "summary": "Download complete",
-            "body": "file.zip",
-        })
+        monitor._notifications.append(
+            {
+                "app_name": "Firefox",
+                "summary": "Download complete",
+                "body": "file.zip",
+            }
+        )
 
         result = monitor.read(clear=False)
 
@@ -67,10 +69,20 @@ class TestNotificationMonitor:
         monitor._running = True
 
         from gi.repository import GLib
-        params = GLib.Variant("(susssasa{sv}i)", (
-            "TestApp", 0, "icon", "Test Summary", "Test Body",
-            [], {}, 5000,
-        ))
+
+        params = GLib.Variant(
+            "(susssasa{sv}i)",
+            (
+                "TestApp",
+                0,
+                "icon",
+                "Test Summary",
+                "Test Body",
+                [],
+                {},
+                5000,
+            ),
+        )
 
         monitor._on_notify(None, "sender", "/path", "iface", "Notify", params, None)
 
@@ -85,6 +97,7 @@ class TestNotificationMonitor:
         monitor._running = True
 
         from gi.repository import GLib
+
         for app in ["App1", "App2", "App3"]:
             params = GLib.Variant("(susssasa{sv}i)", (app, 0, "", "sum", "body", [], {}, -1))
             monitor._on_notify(None, "s", "/p", "i", "Notify", params, None)

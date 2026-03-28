@@ -2,10 +2,16 @@ from __future__ import annotations
 
 import time
 
-from .desktop import accessibility, input, interaction
-import shutil
-
-from .desktop import accessibility, dbus, display, input, interaction, notifications, screencast, workspaces
+from .desktop import (
+    accessibility,
+    dbus,
+    display,
+    input,
+    interaction,
+    notifications,
+    screencast,
+    workspaces,
+)
 
 JsonDict = dict[str, object]
 
@@ -388,7 +394,5 @@ def screen_record_start(
     )
 
 
-def screen_record_stop(
-    to_gif: bool = False, gif_fps: int = 10, gif_width: int = 640
-) -> JsonDict:
+def screen_record_stop(to_gif: bool = False, gif_fps: int = 10, gif_width: int = 640) -> JsonDict:
     return screencast.screen_record_stop(to_gif=to_gif, gif_fps=gif_fps, gif_width=gif_width)

@@ -45,18 +45,21 @@ class TestVariantFromJson:
 class TestVariantToJson:
     def test_string(self) -> None:
         from gi.repository import GLib
+
         v = GLib.Variant("(s)", ("hello",))
         result = dbus_mod._variant_to_json(v)
         assert result == ("hello",)
 
     def test_nested_dict(self) -> None:
         from gi.repository import GLib
+
         v = GLib.Variant("(a{sv})", ({"key": GLib.Variant("s", "val")},))
         result = dbus_mod._variant_to_json(v)
         assert result == ({"key": "val"},)
 
     def test_int(self) -> None:
         from gi.repository import GLib
+
         v = GLib.Variant("(iu)", (42, 99))
         result = dbus_mod._variant_to_json(v)
         assert result == (42, 99)
@@ -68,7 +71,10 @@ class TestDbusCall:
             mock_bus = MagicMock()
             mock_gio.bus_get_sync.return_value = mock_bus
             from gi.repository import GLib
-            mock_bus.call_sync.return_value = GLib.Variant("(ssss)", ("GNOME Shell", "GNOME", "46.0", "1.2"))
+
+            mock_bus.call_sync.return_value = GLib.Variant(
+                "(ssss)", ("GNOME Shell", "GNOME", "46.0", "1.2")
+            )
 
             result = dbus_mod.dbus_call(
                 bus_name="org.freedesktop.Notifications",
@@ -85,6 +91,7 @@ class TestDbusCall:
             mock_bus = MagicMock()
             mock_gio.bus_get_sync.return_value = mock_bus
             from gi.repository import GLib
+
             mock_bus.call_sync.return_value = GLib.Variant("(b)", (True,))
 
             result = dbus_mod.dbus_call(
@@ -131,6 +138,7 @@ class TestDbusCall:
             mock_bus = MagicMock()
             mock_gio.bus_get_sync.return_value = mock_bus
             from gi.repository import GLib
+
             mock_bus.call_sync.return_value = GLib.Variant("(s)", ("ok",))
 
             result = dbus_mod.dbus_call(

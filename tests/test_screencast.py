@@ -13,6 +13,7 @@ class TestScreenRecordStart:
             mock_bus = MagicMock()
             mock_get_bus.return_value = mock_bus
             from gi.repository import GLib
+
             mock_bus.call_sync.return_value = GLib.Variant("(bs)", (True, "/tmp/rec.mp4"))
 
             result = sc_mod.screen_record_start()
@@ -27,6 +28,7 @@ class TestScreenRecordStart:
             mock_bus = MagicMock()
             mock_get_bus.return_value = mock_bus
             from gi.repository import GLib
+
             mock_bus.call_sync.return_value = GLib.Variant("(bs)", (True, "/tmp/area.mp4"))
 
             result = sc_mod.screen_record_start(x=0, y=0, width=800, height=600)
@@ -40,6 +42,7 @@ class TestScreenRecordStart:
             mock_bus = MagicMock()
             mock_get_bus.return_value = mock_bus
             from gi.repository import GLib
+
             mock_bus.call_sync.return_value = GLib.Variant("(bs)", (True, "/tmp/rec.mp4"))
 
             result = sc_mod.screen_record_start()
@@ -54,6 +57,7 @@ class TestScreenRecordStop:
             mock_bus = MagicMock()
             mock_get_bus.return_value = mock_bus
             from gi.repository import GLib
+
             mock_bus.call_sync.return_value = GLib.Variant("(b)", (True,))
 
             result = sc_mod.screen_record_stop()
@@ -75,6 +79,7 @@ class TestScreenRecordStop:
             mock_bus = MagicMock()
             mock_get_bus.return_value = mock_bus
             from gi.repository import GLib
+
             mock_bus.call_sync.return_value = GLib.Variant("(b)", (True,))
             mock_run.return_value = MagicMock(returncode=0)
 
@@ -92,6 +97,7 @@ class TestScreenRecordStop:
             mock_bus = MagicMock()
             mock_get_bus.return_value = mock_bus
             from gi.repository import GLib
+
             mock_bus.call_sync.side_effect = [
                 GLib.Variant("(bs)", (True, "/tmp/rec.mp4")),
                 GLib.Variant("(b)", (True,)),
