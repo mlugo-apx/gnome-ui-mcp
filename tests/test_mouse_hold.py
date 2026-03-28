@@ -56,7 +56,7 @@ class TestMutterButtonDown:
 
         try:
             remote.button_down(0, 0, button="invalid")
-            assert False, "Should have raised ValueError"
+            raise AssertionError("Should have raised ValueError")
         except ValueError:
             pass
 
@@ -100,7 +100,7 @@ class TestMutterButtonUp:
 
         try:
             remote.button_up(0, 0, button="left")
-            assert False, "Should have raised ValueError"
+            raise AssertionError("Should have raised ValueError")
         except ValueError as exc:
             assert "not currently held" in str(exc).lower()
 

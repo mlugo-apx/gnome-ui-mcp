@@ -154,13 +154,13 @@ class TestTouchMultiSwipe:
         remote = _make_remote()
         try:
             remote.touch_multi_swipe(0, 0, 100, 100, fingers=0, duration_ms=200)
-            assert False, "Should have raised ValueError"
+            raise AssertionError("Should have raised ValueError")
         except ValueError:
             pass
 
         try:
             remote.touch_multi_swipe(0, 0, 100, 100, fingers=6, duration_ms=200)
-            assert False, "Should have raised ValueError"
+            raise AssertionError("Should have raised ValueError")
         except ValueError:
             pass
 

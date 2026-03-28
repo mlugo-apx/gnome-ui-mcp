@@ -42,7 +42,7 @@ class TestMutterKeyDown:
         ):
             try:
                 remote.key_down("NotARealKeyName_XYZ_999")
-                assert False, "Should have raised ValueError"
+                raise AssertionError("Should have raised ValueError")
             except ValueError:
                 pass
 
@@ -81,7 +81,7 @@ class TestMutterKeyUp:
 
         try:
             remote.key_up("Control_L")
-            assert False, "Should have raised ValueError"
+            raise AssertionError("Should have raised ValueError")
         except ValueError as exc:
             assert "not currently held" in str(exc).lower()
 

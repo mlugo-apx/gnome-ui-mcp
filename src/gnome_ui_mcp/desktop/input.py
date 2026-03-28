@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import atexit
+import os
+import subprocess
 import threading
 import time
 from dataclasses import dataclass
@@ -806,6 +808,10 @@ def perform_scroll(
         return _REMOTE_INPUT.scroll(direction, clicks, x, y)
     except Exception as exc:
         result = _perform_scroll_atspi(direction, clicks, x, y)
+        result["fallback_error"] = str(exc)
+        return result
+
+
 ATSPI_BUTTON_PRESS_MAP = {"left": "b1p", "middle": "b2p", "right": "b3p"}
 ATSPI_BUTTON_RELEASE_MAP = {"left": "b1r", "middle": "b2r", "right": "b3r"}
 
@@ -959,6 +965,10 @@ def _perform_key_combo_atspi(
         "success": True,
         "modifier_keyvals": modifier_keyvals,
         "principal_keyval": principal_keyval,
+        "backend": "atspi",
+    }
+
+
 def _perform_key_down_atspi(key_name: str) -> JsonDict:
     try:
         keyval = _key_name_to_keyval(key_name)
@@ -980,6 +990,10 @@ def key_combo(combo: str) -> JsonDict:
         return _REMOTE_INPUT.press_key_combo(modifier_keyvals, principal_keyval)
     except Exception as exc:
         result = _perform_key_combo_atspi(modifier_keyvals, principal_keyval)
+        result["fallback_error"] = str(exc)
+        return result
+
+
 def _perform_key_up_atspi(key_name: str) -> JsonDict:
     try:
         keyval = _key_name_to_keyval(key_name)
