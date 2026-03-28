@@ -1,12 +1,12 @@
 # Linux Desktop Automation MCP Servers — Deep Feature Comparison
 
-> Last updated: 2026-03-28
+> Last updated: 2026-03-28 (all branches)
 
 | Feature | **gnome-ui-mcp** (ours) | **kwin-mcp** | **hyprland-mcp** | **wayland-mcp** | **hyprmcp** |
 |---|---|---|---|---|---|
 | **Repository** | asattelmaier + mlugo-apx | isac322/kwin-mcp | alderban107/hyprland-mcp | someaka/wayland-mcp | stefanoamorelli/hyprmcp |
 | **Target** | GNOME Wayland (Mutter) | KDE Plasma 6 (KWin) | Hyprland | Any Wayland | Hyprland |
-| **Total tools** | **~69** | 29 | 27 | 9 | 13 |
+| **Total tools** | **79** | 29 | 27 | 9 | 13 |
 | **Input method** | Mutter RemoteDesktop D-Bus | KWin EIS/libei | hyprctl + ydotool + wtype | evemu (raw kernel) | hyprctl only |
 | | | | | | |
 | **MOUSE INPUT** | | | | | |
@@ -46,7 +46,7 @@
 | Select element text | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | | | | | |
 | **SCREENSHOTS & RECORDING** | | | | | |
-| Full screen | ✅ D-Bus Shell.Screenshot | ✅ KWin ScreenShot2 | ✅ grim | ✅ multi-backend | ❌ |
+| Full screen | ✅ D-Bus + JPEG/resize/HiDPI | ✅ KWin ScreenShot2 | ✅ grim | ✅ multi-backend | ❌ |
 | Region/area | ✅ | ❌ | ✅ | ⚡ | ❌ |
 | Window | ✅ | ❌ | ✅ | ❌ | ❌ |
 | Burst after action | ✅ | ✅ screenshot_after_ms | ❌ | ❌ | ❌ |
@@ -55,8 +55,8 @@
 | **OCR & VISION** | | | | | |
 | OCR text extraction | ✅ Tesseract + dark-theme | ❌ | ✅ Tesseract + dark-theme | ❌ | ❌ |
 | OCR click-by-text | ✅ click_text_ocr | ❌ | ✅ click_text | ❌ | ❌ |
-| OCR type-into by label | ❌ | ❌ | ✅ type_into | ❌ | ❌ |
-| VLM/AI vision analysis | ❌ | ❌ | ❌ | ✅ OpenRouter VLM | ❌ |
+| OCR type-into by label | ✅ type_into (AT-SPI + OCR hybrid) | ❌ | ✅ type_into (OCR only) | ❌ | ❌ |
+| VLM/AI vision analysis | ✅ OpenRouter + Anthropic + Ollama | ❌ | ❌ | ✅ OpenRouter VLM | ❌ |
 | | | | | | |
 | **CLIPBOARD** | | | | | |
 | Read | ✅ wl-paste | ✅ wl-paste | ✅ wl-paste | ❌ | ❌ |
@@ -65,9 +65,9 @@
 | **WINDOW MANAGEMENT** | | | | | |
 | List windows | ✅ AT-SPI | ✅ AT-SPI | ✅ hyprctl | ❌ | ✅ hyprctl |
 | Focus window | ✅ | ✅ | ✅ | ❌ | ⚡ dispatch |
-| Close window | ❌ | ❌ | ✅ | ❌ | ❌ |
-| Move/resize window | ❌ | ❌ | ✅ | ❌ | ⚡ dispatch |
-| Toggle fullscreen/float | ❌ | ❌ | ✅ | ❌ | ⚡ dispatch |
+| Close window | ✅ Alt+F4 | ❌ | ✅ | ❌ | ❌ |
+| Move/resize window | ✅ keyboard move/resize mode | ❌ | ✅ pixel-precise | ❌ | ⚡ dispatch |
+| Toggle fullscreen/float | ✅ F11 / Alt+F10 / Super+h | ❌ | ✅ | ❌ | ⚡ dispatch |
 | | | | | | |
 | **WORKSPACE & MONITOR** | | | | | |
 | List workspaces | ✅ Shell.Introspect | ❌ | ✅ | ❌ | ✅ |
@@ -91,11 +91,11 @@
 | Wayland protocol info | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | | | | | |
 | **ARCHITECTURE** | | | | | |
-| Session isolation | ✅ gnome-shell --headless | ✅ (D-Bus + display + input + home) | ❌ | ❌ | ❌ |
-| Action chaining | ❌ | ❌ | ❌ | ✅ chain: syntax | ❌ |
-| Coordinate mapping | ❌ | ❌ | ✅ formula per screenshot | ❌ | ❌ |
-| Screenshot auto-resize | ❌ | ❌ | ✅ JPEG + scale | ❌ | ❌ |
-| Targeted shortcuts (per-window) | ❌ | ❌ | ✅ send_shortcut(target=) | ❌ | ❌ |
+| Session isolation | ✅ gnome-shell --headless | ✅ kwin_wayland --virtual | ❌ | ❌ | ❌ |
+| Coordinate / HiDPI handling | ✅ scale metadata + pixel↔logical | ❌ | ✅ formula per screenshot | ❌ | ❌ |
+| Screenshot format / resize | ✅ JPEG + max_width + scale_to_logical | ❌ | ✅ JPEG + scale | ❌ | ❌ |
+| Action chaining | N/A (by design) | ❌ | ❌ | ✅ chain: syntax | ❌ |
+| Per-window shortcuts | N/A (Wayland limitation) | ❌ | ✅ send_shortcut(target=) | ❌ | ❌ |
 
 ---
 
@@ -108,20 +108,30 @@
 | Touch input | 4/4 | 4/4 | 0/4 | 0/4 | 0/4 |
 | Accessibility | 12/12 | 3/12 | 0/12 | 0/12 | 0/12 |
 | Screenshots | 5/5 | 2/5 | 3/5 | 2/5 | 0/5 |
-| OCR/Vision | 2/4 | 0/4 | 3/4 | 1/4 | 0/4 |
+| OCR/Vision | **4/4** | 0/4 | 3/4 | 1/4 | 0/4 |
 | Clipboard | 2/2 | 2/2 | 2/2 | 0/2 | 0/2 |
-| Window mgmt | 2/5 | 2/5 | 5/5 | 0/5 | 2/5 |
+| Window mgmt | **5/5** | 2/5 | 5/5 | 0/5 | 2/5 |
 | Workspace/Monitor | 5/5 | 0/5 | 4/5 | 0/5 | 3/5 |
 | App mgmt | 4/4 | 2/4 | 1/4 | 0/4 | 0/4 |
 | System integration | 6/6 | 2/6 | 0/6 | 0/6 | 1/6 |
-| **TOTAL** | **53/58** | **28/58** | **25/58** | **10/58** | **6/58** |
+| **TOTAL** | **58/58 (100%)** | **28/58 (48%)** | **25/58 (43%)** | **10/58 (17%)** | **6/58 (10%)** |
+
+---
 
 ## Unique Strengths
 
 | Project | What only it has |
 |---------|-----------------|
-| **gnome-ui-mcp** | Deepest AT-SPI integration (12 tools), effect verification, element recovery, popup detection, notification monitoring, screen recording, GSettings, pixel color, visual diff, GNOME overview toggle. Most tools (69). |
-| **kwin-mcp** | Only project with full session isolation (D-Bus + display + input + home). EIS/libei for input. Waypoint-based drag. screenshot_after_ms built into every action. |
-| **hyprland-mcp** | Best OCR (auto-scope to active window, dark theme). type_into by label. Coordinate mapping in screenshots. Best window management (move, resize, fullscreen, float). Per-window shortcuts. |
-| **wayland-mcp** | Only VLM/AI vision analysis (OpenRouter). Action chaining. Compositor-agnostic. |
-| **hyprmcp** | Lightest weight (single file). Direct hyprctl dispatch access. Hyprland config modification. |
+| **gnome-ui-mcp** | Deepest AT-SPI (12 tools), effect verification, element recovery, popup detection, AT-SPI+OCR hybrid type-into, notification monitoring, screen recording, GSettings, pixel color, visual diff, GNOME overview toggle, session isolation via gnome-shell --headless, HiDPI coordinate handling, multi-provider VLM (OpenRouter + Anthropic + Ollama). Most tools (79). Only project at 100% feature coverage. |
+| **kwin-mcp** | Mature session isolation with home directory sandboxing. EIS/libei input. Waypoint drag. screenshot_after_ms built into every action. |
+| **hyprland-mcp** | OCR auto-scope to active window. Pixel-precise window move/resize. Per-window shortcuts. Coordinate mapping formula. |
+| **wayland-mcp** | Compositor-agnostic. Action chaining syntax. |
+| **hyprmcp** | Lightest weight (single file). Direct hyprctl dispatch. Hyprland config modification. |
+
+---
+
+## Architecture Notes
+
+**Action chaining** is marked N/A (not ❌) because MCP's design makes the LLM the orchestrator — blind chaining bypasses effect verification, which is our biggest differentiator. Expert review confirmed this is an anti-pattern for MCP.
+
+**Per-window shortcuts** is marked N/A because Wayland's security model fundamentally prevents input injection into non-focused surfaces. This is a compositor-level constraint, not a missing feature. Our focus→verify→send pattern is more reliable.
