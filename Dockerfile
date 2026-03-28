@@ -32,4 +32,9 @@ RUN chmod +x ./scripts/bootstrap.sh ./scripts/check.sh \
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="/app/.venv/bin:${PATH}"
 
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"healthcheck","version":"0.1"}}}' \
+      | timeout 5 gnome-ui-mcp 2>/dev/null \
+      | grep -q '"result"' || exit 1
+
 ENTRYPOINT ["gnome-ui-mcp"]
