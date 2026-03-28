@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import atexit
-import os
 import shutil
 import subprocess
 import threading

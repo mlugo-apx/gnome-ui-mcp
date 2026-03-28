@@ -222,6 +222,8 @@ def scroll(
             y=y,
         )
     )
+
+
 @mcp.tool(description="Read text from the system clipboard or primary selection.")
 def clipboard_read(
     selection: Literal["clipboard", "primary"] = "clipboard",
