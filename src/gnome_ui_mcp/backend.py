@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import time
 
-from .desktop import accessibility, input, interaction
-import shutil
-
 from .desktop import accessibility, apps, input, interaction
 
 JsonDict = dict[str, object]
