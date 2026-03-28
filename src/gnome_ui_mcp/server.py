@@ -477,3 +477,26 @@ def wait_for_element_gone(
             within_popup=within_popup,
         )
     )
+
+
+@mcp.tool(
+    description=(
+        "List installed desktop applications available for launching, "
+        "optionally filtered by search query."
+    )
+)
+def list_desktop_apps(
+    query: str = "",
+    include_hidden: bool = False,
+    max_results: int = 50,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.list_desktop_apps(
+            query=query, include_hidden=include_hidden, max_results=max_results
+        )
+    )
+
+
+@mcp.tool(description="Launch a desktop application by its .desktop file ID.")
+def launch_app(desktop_id: str) -> CallToolResult:
+    return _run_tool(lambda: backend.launch_app(desktop_id=desktop_id))
