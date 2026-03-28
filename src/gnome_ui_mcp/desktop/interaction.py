@@ -114,7 +114,7 @@ def _verified_result_after_settle(
     )
     verified, verification = _verify_effect(before, after)
     verification["shell_settled"] = settled
-    if not settled.get("success"):
+    if not settled.get("success") and verified is not True:
         verified = False
         verification["reason"] = "shell_not_settled"
 
