@@ -28,6 +28,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+hidpi = [
+  "Pillow>=10.0",
+]
 ocr = [
   "pytesseract>=0.3",
   "Pillow>=10.0",

@@ -10,7 +10,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from PIL import Image
+try:
+    from PIL import Image
+
+    _HAS_PIL = True
+except ImportError:
+    _HAS_PIL = False
 
 from ..runtime.gi_env import Atspi, Gdk, Gio, GLib
 
@@ -1089,13 +1094,35 @@ def screenshot(
         return {"success": False, "error": "Shell screenshot returned failure"}
 
     scale_factor = get_display_scale_factor()
-    img = Image.open(filename_used)
-    pixel_w, pixel_h = img.size
-    logical_w = pixel_w // scale_factor
-    logical_h = pixel_h // scale_factor
+
+    # If resizing is requested but PIL is not available, return error
+    if (scale_to_logical or max_width) and not _HAS_PIL:
+        return {
+            "success": False,
+            "error": (
+                "Pillow is required for image resizing. "
+                "Install with: pip install 'gnome-ui-mcp[hidpi]'"
+            ),
+        }
 
     needs_save = False
     final_path = filename_used
+
+    # Open image and get dimensions
+    if _HAS_PIL:
+        img = Image.open(filename_used)
+        pixel_w, pixel_h = img.size
+    else:
+        # Without PIL, we can't open the image to get dimensions
+        # Return basic info without pixel dimensions
+        return {
+            "success": True,
+            "path": final_path,
+            "scale_factor": scale_factor,
+        }
+
+    logical_w = pixel_w // scale_factor
+    logical_h = pixel_h // scale_factor
 
     if scale_to_logical and scale_factor > 1:
         img = img.resize((logical_w, logical_h), Image.Resampling.LANCZOS)
