@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from .desktop import accessibility, input, interaction
+from .desktop import accessibility, apps, input, interaction
 
 JsonDict = dict[str, object]
 
@@ -326,3 +326,17 @@ def wait_for_element_gone(
         within_element_id=within_element_id,
         within_popup=within_popup,
     )
+
+
+def list_desktop_apps(
+    query: str = "",
+    include_hidden: bool = False,
+    max_results: int = 50,
+) -> JsonDict:
+    return apps.list_desktop_apps(
+        query=query, include_hidden=include_hidden, max_results=max_results
+    )
+
+
+def launch_app(desktop_id: str) -> JsonDict:
+    return apps.launch_app(desktop_id=desktop_id)
