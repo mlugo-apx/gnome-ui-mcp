@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import time
 from collections import deque
 from typing import Any
 
 from ..runtime.gi_env import Gio, GLib
+
+logger = logging.getLogger(__name__)
 
 JsonDict = dict[str, Any]
 
@@ -90,7 +93,7 @@ class NotificationMonitor:
                 }
             )
         except Exception:
-            pass
+            logger.debug("Failed to parse notification signal", exc_info=True)
 
 
 _MONITOR = NotificationMonitor()

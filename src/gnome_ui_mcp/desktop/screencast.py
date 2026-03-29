@@ -42,25 +42,45 @@ def screen_record_start(
         bus = _get_bus()
         is_area = all(v is not None for v in (x, y, width, height))
 
+        options = GLib.Variant(
+            "a{sv}",
+            {
+                "framerate": GLib.Variant("i", framerate),
+                "draw-cursor": GLib.Variant("b", draw_cursor),
+            },
+        )
+
         if is_area:
+            params = GLib.Variant.new_tuple(
+                GLib.Variant("i", x),
+                GLib.Variant("i", y),
+                GLib.Variant("i", width),
+                GLib.Variant("i", height),
+                GLib.Variant("s", file_template),
+                options,
+            )
             result = bus.call_sync(
                 GNOME_SHELL_SCREENCAST_BUS,
                 GNOME_SHELL_SCREENCAST_PATH,
                 GNOME_SHELL_SCREENCAST_IFACE,
                 "ScreencastArea",
-                GLib.Variant("(iiiibs)", (x, y, width, height, False, file_template)),
+                params,
                 None,
                 Gio.DBusCallFlags.NONE,
                 5000,
                 None,
             )
         else:
+            params = GLib.Variant.new_tuple(
+                GLib.Variant("s", file_template),
+                options,
+            )
             result = bus.call_sync(
                 GNOME_SHELL_SCREENCAST_BUS,
                 GNOME_SHELL_SCREENCAST_PATH,
                 GNOME_SHELL_SCREENCAST_IFACE,
                 "Screencast",
-                GLib.Variant("(bbs)", (False, False, file_template)),
+                params,
                 None,
                 Gio.DBusCallFlags.NONE,
                 5000,
