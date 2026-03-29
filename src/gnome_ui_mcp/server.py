@@ -236,6 +236,32 @@ def scroll(
 
 @mcp.tool(
     description=(
+        "Perform a two-finger rotation gesture around a center point. "
+        "Angles are in radians. Two touch slots trace circular arcs on opposite sides."
+    )
+)
+def touch_rotate(
+    center_x: int,
+    center_y: int,
+    start_angle: float,
+    end_angle: float,
+    radius: float,
+    duration_ms: int = 400,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.touch_rotate(
+            center_x=center_x,
+            center_y=center_y,
+            start_angle=start_angle,
+            end_angle=end_angle,
+            radius=radius,
+            duration_ms=duration_ms,
+        )
+    )
+
+
+@mcp.tool(
+    description=(
         "Move the mouse cursor to absolute screen coordinates without clicking. "
         "Useful for hover effects, tooltips, and drag preparation."
     )
