@@ -138,12 +138,14 @@ def click_element(
     element_id: str,
     action_name: str | None = None,
     click_count: Literal[1, 2, 3] = 1,
+    button: Literal["left", "middle", "right"] = "left",
 ) -> CallToolResult:
     return _run_tool(
         lambda: backend.click_element(
             element_id=element_id,
             action_name=action_name,
             click_count=click_count,
+            button=button,
         )
     )
 

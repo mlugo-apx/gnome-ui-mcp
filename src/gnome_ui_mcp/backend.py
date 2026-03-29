@@ -113,10 +113,16 @@ def resolve_click_target(element_id: str) -> JsonDict:
 
 
 def click_element(
-    element_id: str, action_name: str | None = None, click_count: int = 1
+    element_id: str,
+    action_name: str | None = None,
+    click_count: int = 1,
+    button: str = "left",
 ) -> JsonDict:
     return interaction.click_element(
-        element_id=element_id, action_name=action_name, click_count=click_count
+        element_id=element_id,
+        action_name=action_name,
+        click_count=click_count,
+        button=button,
     )
 
 
