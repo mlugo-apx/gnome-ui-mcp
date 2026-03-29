@@ -637,7 +637,9 @@ def perform_mouse_click(
     try:
         return _REMOTE_INPUT.click_at(actual_x, actual_y, button=button, click_count=click_count)
     except Exception as exc:
-        result = _perform_mouse_click_atspi(actual_x, actual_y, button=button, click_count=click_count)
+        result = _perform_mouse_click_atspi(
+            actual_x, actual_y, button=button, click_count=click_count
+        )
         result["fallback_error"] = str(exc)
         return result
 
