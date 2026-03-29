@@ -318,16 +318,19 @@ def resolve_click_target(element_id: str) -> JsonDict:
 
 
 def click_element(
-    element_id: str, action_name: str | None = None, click_count: int = 1
+    element_id: str,
+    action_name: str | None = None,
+    click_count: int = 1,
+    button: str = "left",
 ) -> JsonDict:
     resolved_element_id, target, recovery = _resolve_target_with_recovery(element_id)
     target_id = str(target["target_id"])
     accessible = accessibility._resolve_element(target_id)
 
     before = _effect_context(target_id)
-    action_index = (
-        accessibility._find_action_index(accessible, action_name) if click_count == 1 else None
-    )
+    # Skip AT-SPI action when a non-left button is requested
+    use_action = click_count == 1 and button == "left"
+    action_index = accessibility._find_action_index(accessible, action_name) if use_action else None
     if action_index is not None:
         performed = accessible.do_action(action_index)
         result = {
@@ -362,7 +365,7 @@ def click_element(
             "error": "Element is neither actionable nor clickable by bounds",
         }
 
-    result = input.perform_mouse_click(center[0], center[1], click_count=click_count)
+    result = input.perform_mouse_click(center[0], center[1], button=button, click_count=click_count)
     after = _effect_context(target_id)
     verified, verification = _verify_effect(before, after)
     result["element_id"] = element_id
