@@ -226,12 +226,65 @@ def scroll(
 
 @mcp.tool(
     description=(
+        "Drag from one screen position to another by pressing a mouse button, "
+        "moving through intermediate positions, and releasing."
+    )
+)
+def drag(
+    start_x: int,
+    start_y: int,
+    end_x: int,
+    end_y: int,
+    button: Literal["left", "middle", "right"] = "left",
+    steps: int = 10,
+    duration_ms: int = 300,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.drag(
+            start_x=start_x,
+            start_y=start_y,
+            end_x=end_x,
+            end_y=end_y,
+            button=button,
+            steps=steps,
+            duration_ms=duration_ms,
+        )
+    )
+
+
+@mcp.tool(description="Read text from the system clipboard or primary selection.")
+def clipboard_read(
+    selection: Literal["clipboard", "primary"] = "clipboard",
+) -> CallToolResult:
+    return _run_tool(lambda: backend.clipboard_read(selection=selection))
+
+
+@mcp.tool(description="Write text to the system clipboard or primary selection.")
+def clipboard_write(
+    text: str,
+    selection: Literal["clipboard", "primary"] = "clipboard",
+) -> CallToolResult:
+    return _run_tool(lambda: backend.clipboard_write(text=text, selection=selection))
+
+
+@mcp.tool(
+    description=(
         "Move the mouse cursor to absolute screen coordinates without clicking. "
         "Useful for hover effects, tooltips, and drag preparation."
     )
 )
 def mouse_move(x: int, y: int) -> CallToolResult:
     return _run_tool(lambda: backend.mouse_move(x=x, y=y))
+
+
+@mcp.tool(
+    description=(
+        "Move the mouse cursor to the center of an element without clicking. "
+        "Useful for triggering hover effects, tooltips, and submenus."
+    )
+)
+def hover_element(element_id: str) -> CallToolResult:
+    return _run_tool(lambda: backend.hover_element(element_id=element_id))
 
 
 @mcp.tool(description="Replace the text contents of an editable element.")
@@ -550,4 +603,123 @@ def visual_diff(image_path_1: str, image_path_2: str, threshold: int = 30) -> Ca
         lambda: backend.visual_diff(
             image_path_1=image_path_1, image_path_2=image_path_2, threshold=threshold
         )
+    )
+
+
+@mcp.tool(
+    description=(
+        "List installed desktop applications available for launching, "
+        "optionally filtered by search query."
+    )
+)
+def list_desktop_apps(
+    query: str = "",
+    include_hidden: bool = False,
+    max_results: int = 50,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.list_desktop_apps(
+            query=query, include_hidden=include_hidden, max_results=max_results
+        )
+    )
+
+
+@mcp.tool(description="Launch a desktop application by its .desktop file ID.")
+def launch_app(desktop_id: str) -> CallToolResult:
+    return _run_tool(lambda: backend.launch_app(desktop_id=desktop_id))
+
+
+@mcp.tool(description="Call any D-Bus method on the session bus. Returns the unpacked result.")
+def dbus_call(
+    bus_name: str,
+    object_path: str,
+    interface: str,
+    method: str,
+    signature: str | None = None,
+    args: list | None = None,
+    timeout_ms: int = 5000,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.dbus_call(
+            bus_name=bus_name,
+            object_path=object_path,
+            interface=interface,
+            method=method,
+            signature=signature,
+            args=args,
+            timeout_ms=timeout_ms,
+        )
+    )
+
+
+@mcp.tool(
+    description="List all connected monitors with resolution, position, scale, and hardware info."
+)
+def list_monitors() -> CallToolResult:
+    return _run_tool(backend.list_monitors)
+
+
+@mcp.tool(description="Switch to a workspace by direction (up or down).")
+def switch_workspace(direction: Literal["up", "down"]) -> CallToolResult:
+    return _run_tool(lambda: backend.switch_workspace(direction=direction))
+
+
+@mcp.tool(description="Move the focused window to another workspace by direction.")
+def move_window_to_workspace(direction: Literal["up", "down"]) -> CallToolResult:
+    return _run_tool(lambda: backend.move_window_to_workspace(direction=direction))
+
+
+@mcp.tool(description="List workspaces and their windows via GNOME Shell Introspect.")
+def list_workspaces() -> CallToolResult:
+    return _run_tool(backend.list_workspaces)
+
+
+@mcp.tool(description="Toggle the GNOME Activities overview on or off.")
+def toggle_overview(active: bool | None = None) -> CallToolResult:
+    return _run_tool(lambda: backend.toggle_overview(active=active))
+
+
+@mcp.tool(
+    description=(
+        "Start monitoring desktop notifications. Call notification_monitor_read to retrieve them."
+    )
+)
+def notification_monitor_start() -> CallToolResult:
+    return _run_tool(backend.notification_monitor_start)
+
+
+@mcp.tool(description="Read captured notifications since monitoring started.")
+def notification_monitor_read(clear: bool = True) -> CallToolResult:
+    return _run_tool(lambda: backend.notification_monitor_read(clear=clear))
+
+
+@mcp.tool(description="Stop monitoring desktop notifications.")
+def notification_monitor_stop() -> CallToolResult:
+    return _run_tool(backend.notification_monitor_stop)
+
+
+@mcp.tool(description="Start recording the screen or a region to video (MP4).")
+def screen_record_start(
+    x: int | None = None,
+    y: int | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    framerate: int = 30,
+    draw_cursor: bool = True,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.screen_record_start(
+            x=x, y=y, width=width, height=height, framerate=framerate, draw_cursor=draw_cursor
+        )
+    )
+
+
+@mcp.tool(description="Stop recording and optionally convert to GIF.")
+def screen_record_stop(
+    to_gif: bool = False,
+    gif_fps: int = 10,
+    gif_width: int = 640,
+) -> CallToolResult:
+    return _run_tool(
+        lambda: backend.screen_record_stop(to_gif=to_gif, gif_fps=gif_fps, gif_width=gif_width)
     )

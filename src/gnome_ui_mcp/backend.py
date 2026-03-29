@@ -2,7 +2,20 @@ from __future__ import annotations
 
 import time
 
-from .desktop import accessibility, gsettings, input, interaction, ocr, visual
+from .desktop import (
+    accessibility,
+    apps,
+    dbus,
+    display,
+    gsettings,
+    input,
+    interaction,
+    notifications,
+    ocr,
+    screencast,
+    visual,
+    workspaces,
+)
 
 JsonDict = dict[str, object]
 
@@ -131,8 +144,40 @@ def scroll(
     )
 
 
+def drag(
+    start_x: int,
+    start_y: int,
+    end_x: int,
+    end_y: int,
+    button: str = "left",
+    steps: int = 10,
+    duration_ms: int = 300,
+) -> JsonDict:
+    return input.perform_drag(
+        start_x=start_x,
+        start_y=start_y,
+        end_x=end_x,
+        end_y=end_y,
+        button=button,
+        steps=steps,
+        duration_ms=duration_ms,
+    )
+
+
+def clipboard_read(selection: str = "clipboard") -> JsonDict:
+    return input.clipboard_read(selection=selection)
+
+
+def clipboard_write(text: str, selection: str = "clipboard") -> JsonDict:
+    return input.clipboard_write(text=text, selection=selection)
+
+
 def mouse_move(x: int, y: int) -> JsonDict:
     return input.perform_mouse_move(x=x, y=y)
+
+
+def hover_element(element_id: str) -> JsonDict:
+    return interaction.hover_element(element_id=element_id)
 
 
 def set_element_text(element_id: str, text: str) -> JsonDict:
@@ -371,3 +416,86 @@ def visual_diff(image_path_1: str, image_path_2: str, threshold: int = 30) -> Js
     return visual.visual_diff(
         image_path_1=image_path_1, image_path_2=image_path_2, threshold=threshold
     )
+
+
+def list_desktop_apps(
+    query: str = "",
+    include_hidden: bool = False,
+    max_results: int = 50,
+) -> JsonDict:
+    return apps.list_desktop_apps(
+        query=query, include_hidden=include_hidden, max_results=max_results
+    )
+
+
+def launch_app(desktop_id: str) -> JsonDict:
+    return apps.launch_app(desktop_id=desktop_id)
+
+
+def dbus_call(
+    bus_name: str,
+    object_path: str,
+    interface: str,
+    method: str,
+    signature: str | None = None,
+    args: list | None = None,
+    timeout_ms: int = 5000,
+) -> JsonDict:
+    return dbus.dbus_call(
+        bus_name=bus_name,
+        object_path=object_path,
+        interface=interface,
+        method=method,
+        signature=signature,
+        args=args,
+        timeout_ms=timeout_ms,
+    )
+
+
+def list_monitors() -> JsonDict:
+    return display.list_monitors()
+
+
+def switch_workspace(direction: str) -> JsonDict:
+    return workspaces.switch_workspace(direction=direction)
+
+
+def move_window_to_workspace(direction: str) -> JsonDict:
+    return workspaces.move_window_to_workspace(direction=direction)
+
+
+def list_workspaces() -> JsonDict:
+    return workspaces.list_workspaces()
+
+
+def toggle_overview(active: bool | None = None) -> JsonDict:
+    return workspaces.toggle_overview(active=active)
+
+
+def notification_monitor_start() -> JsonDict:
+    return notifications.notification_monitor_start()
+
+
+def notification_monitor_read(clear: bool = True) -> JsonDict:
+    return notifications.notification_monitor_read(clear=clear)
+
+
+def notification_monitor_stop() -> JsonDict:
+    return notifications.notification_monitor_stop()
+
+
+def screen_record_start(
+    x: int | None = None,
+    y: int | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    framerate: int = 30,
+    draw_cursor: bool = True,
+) -> JsonDict:
+    return screencast.screen_record_start(
+        x=x, y=y, width=width, height=height, framerate=framerate, draw_cursor=draw_cursor
+    )
+
+
+def screen_record_stop(to_gif: bool = False, gif_fps: int = 10, gif_width: int = 640) -> JsonDict:
+    return screencast.screen_record_stop(to_gif=to_gif, gif_fps=gif_fps, gif_width=gif_width)
