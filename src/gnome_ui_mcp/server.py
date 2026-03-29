@@ -511,6 +511,12 @@ def navigate_menu(
     app_name: str | None = None,
 ) -> CallToolResult:
     return _run_tool(lambda: backend.navigate_menu(menu_path=menu_path, app_name=app_name))
+        "Set a file path in a GTK file dialog by sending Ctrl+L to activate the "
+        "location entry, typing the path, and pressing Return."
+    )
+)
+def file_dialog_set_path(path: str) -> CallToolResult:
+    return _run_tool(lambda: backend.file_dialog_set_path(path=path))
 
 
 @mcp.tool(description="Return metadata about the currently focused element.")

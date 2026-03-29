@@ -12,6 +12,7 @@ from .desktop import (
     dbus,
     display,
     events,
+    file_dialog,
     gsettings,
     highlight,
     history,
@@ -623,6 +624,8 @@ def navigate_menu(
     app_name: str | None = None,
 ) -> JsonDict:
     return interaction.navigate_menu(menu_path=menu_path, app_name=app_name)
+def file_dialog_set_path(path: str) -> JsonDict:
+    return file_dialog.file_dialog_set_path(path=path)
 
 
 def get_focused_element() -> JsonDict:
