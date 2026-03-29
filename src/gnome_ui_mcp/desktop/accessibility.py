@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import time
-from collections.abc import Iterable
-from typing import Any
+from collections.abc import Callable, Iterable
+from typing import TypeVar
 
 from ..runtime.gi_env import Atspi
 from .locators import build_locator, remember_locator
+from .types import ElementFilter, JsonDict, TreeOptions
 
-JsonDict = dict[str, Any]
+_T = TypeVar("_T")
 
 WINDOW_ROLES = {"alert", "dialog", "file chooser", "frame", "window"}
 PREFERRED_ACTIONS = ("click", "press", "activate", "jump", "open", "select", "toggle")
@@ -46,7 +47,7 @@ def desktop_count() -> int:
     return Atspi.get_desktop_count()
 
 
-def _safe_call(func: Any, default: Any = None) -> Any:
+def _safe_call(func: Callable[[], _T], default: _T | None = None) -> _T | None:
     try:
         return func()
     except Exception:
@@ -230,36 +231,24 @@ def _serialize_tree(
     path: tuple[int, ...],
     *,
     depth: int,
-    max_depth: int,
-    include_actions: bool,
-    include_text: bool,
-    filter_roles: list[str] | None = None,
-    filter_states: list[str] | None = None,
-    showing_only: bool = False,
+    opts: TreeOptions,
 ) -> JsonDict | None:
     # Check filters before building the node
     role_name = _safe_call(accessible.get_role_name, "")
     states = _element_states(accessible)
 
-    if showing_only and "showing" not in states:
+    if opts.showing_only and "showing" not in states:
         return None
-    if filter_roles and role_name not in filter_roles:
-        # Still recurse into children in case they match
-        pass
-    if filter_states:
-        if not all(s in states for s in filter_states):
-            # Still recurse, but mark this node as filtered
-            pass
 
     # Determine if this node itself passes filters
-    passes_role = not filter_roles or role_name in filter_roles
-    passes_states = not filter_states or all(s in states for s in filter_states)
-    passes_showing = not showing_only or "showing" in states
+    passes_role = not opts.filter_roles or role_name in opts.filter_roles
+    passes_states = not opts.filter_states or all(s in states for s in opts.filter_states)
+    passes_showing = not opts.showing_only or "showing" in states
     node_passes = passes_role and passes_states and passes_showing
 
     # Recurse into children
     children: list[JsonDict] = []
-    if depth < max_depth:
+    if depth < opts.max_depth:
         child_count = _safe_call(accessible.get_child_count, 0) or 0
         for index in range(child_count):
             child = _safe_call(lambda idx=index: accessible.get_child_at_index(idx))
@@ -269,12 +258,7 @@ def _serialize_tree(
                 child,
                 path + (index,),
                 depth=depth + 1,
-                max_depth=max_depth,
-                include_actions=include_actions,
-                include_text=include_text,
-                filter_roles=filter_roles,
-                filter_states=filter_states,
-                showing_only=showing_only,
+                opts=opts,
             )
             if child_node is not None:
                 children.append(child_node)
@@ -287,8 +271,8 @@ def _serialize_tree(
     node = _element_summary(
         accessible,
         path,
-        include_actions=include_actions,
-        include_text=include_text,
+        include_actions=opts.include_actions,
+        include_text=opts.include_text,
     )
     node["children"] = children
     return node
@@ -680,13 +664,10 @@ def list_windows(app_name: str | None = None) -> JsonDict:
 
 def accessibility_tree(
     app_name: str | None = None,
-    max_depth: int = 4,
-    include_actions: bool = False,
-    include_text: bool = False,
-    filter_roles: list[str] | None = None,
-    filter_states: list[str] | None = None,
-    showing_only: bool = False,
+    opts: TreeOptions | None = None,
 ) -> JsonDict:
+    if opts is None:
+        opts = TreeOptions()
     roots = _select_applications(app_name)
     if not roots:
         error = f"No application matched {app_name!r}" if app_name else "No applications found"
@@ -698,12 +679,7 @@ def accessibility_tree(
             app,
             path,
             depth=0,
-            max_depth=max_depth,
-            include_actions=include_actions,
-            include_text=include_text,
-            filter_roles=filter_roles,
-            filter_states=filter_states,
-            showing_only=showing_only,
+            opts=opts,
         )
         if tree is not None:
             trees.append(tree)
@@ -712,24 +688,39 @@ def accessibility_tree(
 
 
 def find_elements(
+    filt: ElementFilter | None = None,
+    max_depth: int = 8,
+    max_results: int = 20,
+    *,
+    # Flat params for backward-compatibility with internal callers (locators.py)
     query: str = "",
     app_name: str | None = None,
     role: str | None = None,
-    max_depth: int = 8,
-    max_results: int = 20,
     showing_only: bool = True,
     clickable_only: bool = False,
     bounds_only: bool = False,
     within_element_id: str | None = None,
     within_popup: bool = False,
 ) -> JsonDict:
+    if filt is None:
+        filt = ElementFilter(
+            query=query,
+            role=role,
+            app_name=app_name,
+            showing_only=showing_only,
+            clickable_only=clickable_only,
+            bounds_only=bounds_only,
+            within_element_id=within_element_id,
+            within_popup=within_popup,
+        )
+
     matches: list[JsonDict] = []
-    role_query = role.casefold() if role else None
+    role_query = filt.role.casefold() if filt.role else None
 
     for root in _search_roots(
-        app_name=app_name,
-        within_element_id=within_element_id,
-        within_popup=within_popup,
+        app_name=filt.app_name,
+        within_element_id=filt.within_element_id,
+        within_popup=filt.within_popup,
         max_depth=max_depth,
     ):
         app = root["accessible"]
@@ -742,28 +733,28 @@ def find_elements(
             role_name = _safe_call(element.get_role_name, "")
             states = _element_states(element)
 
-            if showing_only and "showing" not in states:
+            if filt.showing_only and "showing" not in states:
                 continue
-            if bounds_only and _element_bounds(element) is None:
+            if filt.bounds_only and _element_bounds(element) is None:
                 continue
 
             element_id = _path_to_id(path)
             try:
                 click_target = _resolve_click_target_metadata(element_id)
             except Exception:
-                if clickable_only:
+                if filt.clickable_only:
                     continue
                 click_target = None
 
             if (
-                clickable_only
+                filt.clickable_only
                 and click_target is not None
                 and click_target["target_id"] != element_id
             ):
                 continue
 
             haystack = " ".join([app_label, name, description, role_name]).casefold()
-            if query and query.casefold() not in haystack:
+            if filt.query and filt.query.casefold() not in haystack:
                 continue
             if role_query and role_query not in role_name.casefold():
                 continue
@@ -771,7 +762,7 @@ def find_elements(
             item = _element_summary(element, path, include_actions=True, include_text=True)
             item["application"] = app_label
             item["scope"] = scope
-            item["locator"] = build_locator(
+            locator = build_locator(
                 name=name,
                 description=description,
                 role_name=role_name,
@@ -783,10 +774,11 @@ def find_elements(
                 ),
                 within_popup=bool(scope.get("within_popup")),
             )
-            remember_locator(item["id"], item["locator"])
+            item["locator"] = locator.to_dict()
+            remember_locator(str(item["id"]), locator)
 
             if click_target is not None:
-                click_target["locator"] = build_locator(
+                ct_locator = build_locator(
                     name=str(click_target.get("target_name", "")) or name,
                     description=description,
                     role_name=str(click_target.get("target_role", "")),
@@ -798,7 +790,8 @@ def find_elements(
                     ),
                     within_popup=bool(scope.get("within_popup")),
                 )
-                remember_locator(str(click_target["target_id"]), click_target["locator"])
+                click_target["locator"] = ct_locator.to_dict()
+                remember_locator(str(click_target["target_id"]), ct_locator)
             item["click_target"] = click_target
             matches.append(item)
 
@@ -1009,30 +1002,13 @@ def wait_for_shell_settled(
 
 
 def wait_for_element(
-    query: str,
-    app_name: str | None = None,
-    role: str | None = None,
+    filt: ElementFilter,
     timeout_ms: int = 5_000,
     poll_interval_ms: int = 250,
-    showing_only: bool = True,
-    clickable_only: bool = False,
-    bounds_only: bool = False,
-    within_element_id: str | None = None,
-    within_popup: bool = False,
 ) -> JsonDict:
     deadline = time.monotonic() + timeout_ms / 1000
     while time.monotonic() < deadline:
-        result = find_elements(
-            query=query,
-            app_name=app_name,
-            role=role,
-            max_results=1,
-            showing_only=showing_only,
-            clickable_only=clickable_only,
-            bounds_only=bounds_only,
-            within_element_id=within_element_id,
-            within_popup=within_popup,
-        )
+        result = find_elements(filt, max_results=1)
         matches = result.get("matches", [])
         if matches:
             return {"success": True, "match": matches[0]}
@@ -1042,39 +1018,22 @@ def wait_for_element(
     return {
         "success": False,
         "error": "Timeout waiting for element",
-        "query": query,
+        "query": filt.query,
     }
 
 
 def wait_for_element_gone(
-    query: str,
-    app_name: str | None = None,
-    role: str | None = None,
+    filt: ElementFilter,
     timeout_ms: int = 5_000,
     poll_interval_ms: int = 250,
-    showing_only: bool = True,
-    clickable_only: bool = False,
-    bounds_only: bool = False,
-    within_element_id: str | None = None,
-    within_popup: bool = False,
 ) -> JsonDict:
     deadline = time.monotonic() + timeout_ms / 1000
     last_match: JsonDict | None = None
     while time.monotonic() < deadline:
-        result = find_elements(
-            query=query,
-            app_name=app_name,
-            role=role,
-            max_results=1,
-            showing_only=showing_only,
-            clickable_only=clickable_only,
-            bounds_only=bounds_only,
-            within_element_id=within_element_id,
-            within_popup=within_popup,
-        )
+        result = find_elements(filt, max_results=1)
         matches = result.get("matches", [])
         if not matches:
-            return {"success": True, "query": query, "gone": True, "last_match": last_match}
+            return {"success": True, "query": filt.query, "gone": True, "last_match": last_match}
 
         last_match = matches[0]
         time.sleep(max(0.05, poll_interval_ms / 1000))
@@ -1082,7 +1041,7 @@ def wait_for_element_gone(
     return {
         "success": False,
         "error": "Timeout waiting for element to disappear",
-        "query": query,
+        "query": filt.query,
         "last_match": last_match,
     }
 

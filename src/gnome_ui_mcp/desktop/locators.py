@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import Any
+from .types import JsonDict, Locator
 
-JsonDict = dict[str, Any]
-
-RECENT_LOCATORS: dict[str, JsonDict] = {}
+RECENT_LOCATORS: dict[str, Locator] = {}
 
 
 def _clean_locator_value(value: str | None) -> str | None:
@@ -22,53 +20,46 @@ def build_locator(
     app_label: str,
     within_element_id: str | None = None,
     within_popup: bool = False,
-) -> JsonDict:
-    locator: JsonDict = {}
+) -> Locator:
     query = _clean_locator_value(name) or _clean_locator_value(description)
     role_value = _clean_locator_value(role_name)
     app_value = _clean_locator_value(app_label)
 
-    if query is not None:
-        locator["query"] = query
-    if role_value is not None:
-        locator["role"] = role_value
-    if app_value is not None:
-        locator["app_name"] = app_value
-    if within_element_id is not None:
-        locator["within_element_id"] = within_element_id
-    if within_popup:
-        locator["within_popup"] = True
-
-    return locator
+    return Locator(
+        query=query,
+        role=role_value,
+        app_name=app_value,
+        within_element_id=within_element_id,
+        within_popup=within_popup,
+    )
 
 
-def remember_locator(element_id: str, locator: JsonDict) -> None:
-    if not locator:
+def remember_locator(element_id: str, locator: Locator) -> None:
+    if not (locator.query or locator.role):
         return
-    RECENT_LOCATORS[element_id] = dict(locator)
+    RECENT_LOCATORS[element_id] = locator
 
 
-def locator_for_element_id(element_id: str) -> JsonDict | None:
-    locator = RECENT_LOCATORS.get(element_id)
-    return dict(locator) if locator is not None else None
+def locator_for_element_id(element_id: str) -> Locator | None:
+    return RECENT_LOCATORS.get(element_id)
 
 
 def relocate_from_locator(
-    locator: JsonDict,
+    locator: Locator,
     *,
     max_results: int = 1,
 ) -> JsonDict:
-    query = str(locator.get("query", "")).strip()
-    role = str(locator.get("role", "")).strip() or None
-    app_name = str(locator.get("app_name", "")).strip() or None
-    within_element_id = str(locator.get("within_element_id", "")).strip() or None
-    within_popup = bool(locator.get("within_popup"))
+    query = locator.query or ""
+    role = locator.role
+    app_name = locator.app_name
+    within_element_id = locator.within_element_id
+    within_popup = locator.within_popup
 
-    if query == "" and role is None:
+    if not query and role is None:
         return {
             "success": False,
             "error": "Locator must include at least a query or role",
-            "locator": locator,
+            "locator": locator.to_dict(),
         }
 
     from . import accessibility
@@ -87,11 +78,11 @@ def relocate_from_locator(
         return {
             "success": False,
             "error": "No element matched locator",
-            "locator": locator,
+            "locator": locator.to_dict(),
         }
 
     return {
         "success": True,
-        "locator": locator,
+        "locator": locator.to_dict(),
         "match": matches[0],
     }

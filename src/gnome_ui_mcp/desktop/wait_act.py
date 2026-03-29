@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from . import accessibility, interaction
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 
 def wait_and_act(

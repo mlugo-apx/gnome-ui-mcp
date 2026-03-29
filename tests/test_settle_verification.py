@@ -9,6 +9,7 @@ from gnome_ui_mcp.desktop.interaction import (
     _verified_result_after_settle,
     _verify_effect,
 )
+from gnome_ui_mcp.desktop.types import EffectContext
 
 JsonDict = dict[str, Any]
 
@@ -17,22 +18,22 @@ class TestVerifyEffect:
     """Baseline: _verify_effect behavior is correct on its own."""
 
     def test_popup_change_returns_true(self) -> None:
-        before: JsonDict = {"shell_popups": ["popup-A"]}
-        after: JsonDict = {"shell_popups": ["popup-A", "popup-B"]}
+        before = EffectContext(shell_popups=["popup-A"])
+        after = EffectContext(shell_popups=["popup-A", "popup-B"])
         verified, detail = _verify_effect(before, after)
         assert verified is True
         assert detail["reason"] == "shell_popups_changed"
 
     def test_no_change_returns_none(self) -> None:
-        before: JsonDict = {"shell_popups": []}
-        after: JsonDict = {"shell_popups": []}
+        before = EffectContext(shell_popups=[])
+        after = EffectContext(shell_popups=[])
         verified, detail = _verify_effect(before, after)
         assert verified is None
         assert detail["reason"] == "no_observable_change"
 
     def test_target_disappeared_returns_true(self) -> None:
-        before: JsonDict = {"shell_popups": [], "element": {"id": "e1", "exists": True}}
-        after: JsonDict = {"shell_popups": [], "element": {"id": "e1", "exists": False}}
+        before = EffectContext(shell_popups=[], element={"id": "e1", "exists": True})
+        after = EffectContext(shell_popups=[], element={"id": "e1", "exists": False})
         verified, detail = _verify_effect(before, after)
         assert verified is True
         assert detail["reason"] == "target_disappeared"
@@ -55,7 +56,7 @@ class TestVerifiedResultAfterSettle:
             "popup_count": 0,
             "signature": [],
         }
-        after_context: JsonDict = {"shell_popups": []}
+        after_context = EffectContext(shell_popups=[])
 
         with (
             patch(
@@ -69,7 +70,7 @@ class TestVerifiedResultAfterSettle:
         ):
             return _verified_result_after_settle(
                 {"method": "test"},
-                before={"shell_popups": []},
+                before=EffectContext(shell_popups=[]),
                 element_id=None,
                 input_injected=True,
             )

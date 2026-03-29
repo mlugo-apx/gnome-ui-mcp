@@ -6,11 +6,9 @@ import base64
 import json
 import os
 import urllib.request
-from typing import Any
 
 from . import input
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 _DEFAULT_MODELS: dict[str, str] = {
     "openrouter": "google/gemma-3-27b-it:free",

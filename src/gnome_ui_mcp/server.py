@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
-from typing import Any, Literal
+from typing import Literal
 
 from mcp.server.fastmcp import FastMCP
 from mcp.types import CallToolResult, TextContent
 
 from . import __version__, backend
-
-JsonDict = dict[str, Any]
+from .desktop.types import JsonDict
 
 mcp = FastMCP(
     name="gnome-ui-mcp",

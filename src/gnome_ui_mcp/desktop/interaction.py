@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from . import accessibility, input
 from .locators import locator_for_element_id, relocate_from_locator
-
-JsonDict = dict[str, Any]
+from .types import EffectContext, ElementFilter, JsonDict, SettleOptions
 
 
 def _capture_burst(screenshot_after_ms: list[int] | None) -> list[JsonDict] | None:
@@ -26,34 +24,33 @@ def _capture_burst(screenshot_after_ms: list[int] | None) -> list[JsonDict] | No
     return screenshots
 
 
-def _effect_context(element_id: str | None = None) -> JsonDict:
-    context: JsonDict = {"shell_popups": accessibility._shell_popup_signature()}
+def _effect_context(element_id: str | None = None) -> EffectContext:
+    shell_popups = accessibility._shell_popup_signature()
     if element_id is None:
-        return context
+        return EffectContext(shell_popups=shell_popups)
 
     try:
         snapshot = accessibility._element_snapshot(element_id)
     except Exception:
-        context["element"] = {"id": element_id, "exists": False}
+        element: JsonDict = {"id": element_id, "exists": False}
     else:
         snapshot["exists"] = True
-        context["element"] = snapshot
-    return context
+        element = snapshot
+    return EffectContext(shell_popups=shell_popups, element=element)
 
 
-def _verify_effect(before: JsonDict, after: JsonDict) -> tuple[bool | None, JsonDict]:
-    before_popups = before.get("shell_popups", [])
-    after_popups = after.get("shell_popups", [])
-    if before_popups != after_popups:
+def _verify_effect(before: EffectContext, after: EffectContext) -> tuple[bool | None, JsonDict]:
+    if before.shell_popups != after.shell_popups:
         return True, {
             "reason": "shell_popups_changed",
-            "before": before_popups,
-            "after": after_popups,
+            "before": before.shell_popups,
+            "after": after.shell_popups,
         }
 
-    before_element = before.get("element")
-    after_element = after.get("element")
-    if before_element and before_element.get("exists") and not after_element.get("exists", False):
+    before_element = before.element
+    after_element = after.element
+    after_exists = bool((after_element or {}).get("exists", False))
+    if before_element and before_element.get("exists") and not after_exists:
         return True, {"reason": "target_disappeared"}
 
     if (
@@ -85,30 +82,31 @@ def _verify_effect(before: JsonDict, after: JsonDict) -> tuple[bool | None, Json
 
 
 def _apply_interaction_result(
-    result: JsonDict,
+    base: JsonDict,
     *,
     input_injected: bool,
     effect_verified: bool | None,
     verification: JsonDict,
 ) -> JsonDict:
-    result["input_injected"] = bool(input_injected)
-    result["effect_verified"] = effect_verified
-    result["verification"] = verification
-    result["success"] = bool(input_injected and effect_verified is not False)
-    return result
+    return {
+        **base,
+        "input_injected": bool(input_injected),
+        "effect_verified": effect_verified,
+        "verification": verification,
+        "success": bool(input_injected and effect_verified is not False),
+    }
 
 
 def _settled_effect_context(
     element_id: str | None = None,
-    *,
-    settle_timeout_ms: int = 1_500,
-    stable_for_ms: int = 250,
-    poll_interval_ms: int = 50,
-) -> tuple[JsonDict, JsonDict]:
+    opts: SettleOptions | None = None,
+) -> tuple[EffectContext, JsonDict]:
+    if opts is None:
+        opts = SettleOptions()
     settled = accessibility.wait_for_shell_settled(
-        timeout_ms=settle_timeout_ms,
-        stable_for_ms=stable_for_ms,
-        poll_interval_ms=poll_interval_ms,
+        timeout_ms=opts.settle_timeout_ms,
+        stable_for_ms=opts.stable_for_ms,
+        poll_interval_ms=opts.poll_interval_ms,
     )
     return _effect_context(element_id), settled
 
@@ -116,19 +114,14 @@ def _settled_effect_context(
 def _verified_result_after_settle(
     result: JsonDict,
     *,
-    before: JsonDict,
+    before: EffectContext,
     element_id: str | None = None,
     input_injected: bool,
-    settle_timeout_ms: int = 1_500,
-    stable_for_ms: int = 250,
-    poll_interval_ms: int = 50,
+    opts: SettleOptions | None = None,
 ) -> JsonDict:
-    after, settled = _settled_effect_context(
-        element_id,
-        settle_timeout_ms=settle_timeout_ms,
-        stable_for_ms=stable_for_ms,
-        poll_interval_ms=poll_interval_ms,
-    )
+    if opts is None:
+        opts = SettleOptions()
+    after, settled = _settled_effect_context(element_id, opts)
     verified, verification = _verify_effect(before, after)
     verification["shell_settled"] = settled
     if not settled.get("success") and verified is not True:
@@ -555,40 +548,22 @@ def activate_element(element_id: str, action_name: str | None = None) -> JsonDic
 
 
 def find_and_activate(
-    query: str,
+    filt: ElementFilter,
     *,
-    app_name: str | None = None,
-    role: str | None = None,
     max_depth: int = 8,
-    showing_only: bool = True,
-    clickable_only: bool = False,
-    bounds_only: bool = False,
-    within_element_id: str | None = None,
-    within_popup: bool = False,
     action_name: str | None = None,
 ) -> JsonDict:
-    result = accessibility.find_elements(
-        query=query,
-        app_name=app_name,
-        role=role,
-        max_depth=max_depth,
-        max_results=1,
-        showing_only=showing_only,
-        clickable_only=clickable_only,
-        bounds_only=bounds_only,
-        within_element_id=within_element_id,
-        within_popup=within_popup,
-    )
+    result = accessibility.find_elements(filt, max_depth=max_depth, max_results=1)
     matches = result.get("matches", [])
     if not matches:
         return {
             "success": False,
             "error": "No element matched query",
-            "query": query,
-            "app_name": app_name,
-            "role": role,
-            "within_element_id": within_element_id,
-            "within_popup": within_popup,
+            "query": filt.query,
+            "app_name": filt.app_name,
+            "role": filt.role,
+            "within_element_id": filt.within_element_id,
+            "within_popup": filt.within_popup,
         }
 
     match = matches[0]
@@ -602,10 +577,10 @@ def press_key(
     key_name: str,
     *,
     element_id: str | None = None,
-    settle_timeout_ms: int = 1_500,
-    stable_for_ms: int = 250,
-    poll_interval_ms: int = 50,
+    opts: SettleOptions | None = None,
 ) -> JsonDict:
+    if opts is None:
+        opts = SettleOptions()
     before = _effect_context(element_id)
     key_result = input.press_key(key_name)
     result = _verified_result_after_settle(
@@ -618,9 +593,7 @@ def press_key(
         before=before,
         element_id=element_id,
         input_injected=bool(key_result.get("success")),
-        settle_timeout_ms=settle_timeout_ms,
-        stable_for_ms=stable_for_ms,
-        poll_interval_ms=poll_interval_ms,
+        opts=opts,
     )
     if key_result.get("fallback_error"):
         result["fallback_error"] = key_result["fallback_error"]
@@ -633,10 +606,10 @@ def key_combo(
     combo: str,
     *,
     element_id: str | None = None,
-    settle_timeout_ms: int = 1_500,
-    stable_for_ms: int = 250,
-    poll_interval_ms: int = 50,
+    opts: SettleOptions | None = None,
 ) -> JsonDict:
+    if opts is None:
+        opts = SettleOptions()
     before = _effect_context(element_id)
     combo_result = input.key_combo(combo)
     result = _verified_result_after_settle(
@@ -649,9 +622,7 @@ def key_combo(
         before=before,
         element_id=element_id,
         input_injected=bool(combo_result.get("success")),
-        settle_timeout_ms=settle_timeout_ms,
-        stable_for_ms=stable_for_ms,
-        poll_interval_ms=poll_interval_ms,
+        opts=opts,
     )
     if combo_result.get("fallback_error"):
         result["fallback_error"] = combo_result["fallback_error"]

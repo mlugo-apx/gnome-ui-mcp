@@ -7,9 +7,8 @@ import select
 import shutil
 import subprocess
 import time
-from typing import Any
 
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 _session: JsonDict | None = None
 

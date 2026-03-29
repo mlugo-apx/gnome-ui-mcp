@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
-
 from . import input
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 try:
     import numpy as np

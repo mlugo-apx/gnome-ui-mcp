@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
 
 from . import accessibility, input
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 try:
     from PIL import Image, ImageDraw  # type: ignore[import-untyped]

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import subprocess
-from typing import Any
 
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 
 def wayland_info(filter_protocol: str | None = None) -> JsonDict:

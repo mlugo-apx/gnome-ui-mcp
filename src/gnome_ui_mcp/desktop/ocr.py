@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
-
 from . import accessibility, input, interaction
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 try:
     from PIL import Image, ImageFilter, ImageOps

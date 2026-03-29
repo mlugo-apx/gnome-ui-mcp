@@ -4,8 +4,7 @@ from typing import Any
 
 from ..runtime.gi_env import Gio, GLib
 from . import input
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 _VALID_DIRECTIONS = {"up", "down"}
 

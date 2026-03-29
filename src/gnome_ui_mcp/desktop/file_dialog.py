@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from . import input
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 
 def file_dialog_set_path(path: str) -> JsonDict:

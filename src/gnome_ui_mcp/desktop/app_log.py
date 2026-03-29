@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import shlex
 import subprocess
-from typing import Any
 
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 _PROCESSES: dict[int, JsonDict] = {}
 

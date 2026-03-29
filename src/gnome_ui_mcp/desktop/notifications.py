@@ -6,10 +6,9 @@ from collections import deque
 from typing import Any
 
 from ..runtime.gi_env import Gio, GLib
+from .types import JsonDict
 
 logger = logging.getLogger(__name__)
-
-JsonDict = dict[str, Any]
 
 
 class NotificationMonitor:

@@ -35,8 +35,7 @@ from .desktop import (
 from .desktop import (
     scroll as scroll_mod,
 )
-
-JsonDict = dict[str, object]
+from .desktop.types import ElementFilter, JsonDict, SettleOptions, TreeOptions
 
 
 def ping() -> JsonDict:
@@ -68,8 +67,7 @@ def accessibility_tree(
     filter_states: list[str] | None = None,
     showing_only: bool = False,
 ) -> JsonDict:
-    return accessibility.accessibility_tree(
-        app_name=app_name,
+    opts = TreeOptions(
         max_depth=max_depth,
         include_actions=include_actions,
         include_text=include_text,
@@ -77,6 +75,7 @@ def accessibility_tree(
         filter_states=filter_states,
         showing_only=showing_only,
     )
+    return accessibility.accessibility_tree(app_name=app_name, opts=opts)
 
 
 def find_elements(
@@ -91,18 +90,17 @@ def find_elements(
     within_element_id: str | None = None,
     within_popup: bool = False,
 ) -> JsonDict:
-    return accessibility.find_elements(
+    filt = ElementFilter(
         query=query,
-        app_name=app_name,
         role=role,
-        max_depth=max_depth,
-        max_results=max_results,
+        app_name=app_name,
         showing_only=showing_only,
         clickable_only=clickable_only,
         bounds_only=bounds_only,
         within_element_id=within_element_id,
         within_popup=within_popup,
     )
+    return accessibility.find_elements(filt, max_depth=max_depth, max_results=max_results)
 
 
 def focus_element(element_id: str) -> JsonDict:
@@ -143,18 +141,17 @@ def find_and_activate(
     within_popup: bool = False,
     action_name: str | None = None,
 ) -> JsonDict:
-    return interaction.find_and_activate(
+    filt = ElementFilter(
         query=query,
-        app_name=app_name,
         role=role,
-        max_depth=max_depth,
+        app_name=app_name,
         showing_only=showing_only,
         clickable_only=clickable_only,
         bounds_only=bounds_only,
         within_element_id=within_element_id,
         within_popup=within_popup,
-        action_name=action_name,
     )
+    return interaction.find_and_activate(filt, max_depth=max_depth, action_name=action_name)
 
 
 def click_at(x: int, y: int, button: str = "left", click_count: int = 1) -> JsonDict:
@@ -236,13 +233,12 @@ def press_key(
     stable_for_ms: int = 250,
     poll_interval_ms: int = 50,
 ) -> JsonDict:
-    return interaction.press_key(
-        key_name=key_name,
-        element_id=element_id,
+    opts = SettleOptions(
         settle_timeout_ms=settle_timeout_ms,
         stable_for_ms=stable_for_ms,
         poll_interval_ms=poll_interval_ms,
     )
+    return interaction.press_key(key_name=key_name, element_id=element_id, opts=opts)
 
 
 def key_combo(
@@ -252,13 +248,12 @@ def key_combo(
     stable_for_ms: int = 250,
     poll_interval_ms: int = 50,
 ) -> JsonDict:
-    return interaction.key_combo(
-        combo=combo,
-        element_id=element_id,
+    opts = SettleOptions(
         settle_timeout_ms=settle_timeout_ms,
         stable_for_ms=stable_for_ms,
         poll_interval_ms=poll_interval_ms,
     )
+    return interaction.key_combo(combo=combo, element_id=element_id, opts=opts)
 
 
 def screenshot(
@@ -368,17 +363,18 @@ def wait_for_element(
     within_element_id: str | None = None,
     within_popup: bool = False,
 ) -> JsonDict:
-    return accessibility.wait_for_element(
+    filt = ElementFilter(
         query=query,
-        app_name=app_name,
         role=role,
-        timeout_ms=timeout_ms,
-        poll_interval_ms=poll_interval_ms,
+        app_name=app_name,
         showing_only=showing_only,
         clickable_only=clickable_only,
         bounds_only=bounds_only,
         within_element_id=within_element_id,
         within_popup=within_popup,
+    )
+    return accessibility.wait_for_element(
+        filt, timeout_ms=timeout_ms, poll_interval_ms=poll_interval_ms
     )
 
 
@@ -394,17 +390,18 @@ def wait_for_element_gone(
     within_element_id: str | None = None,
     within_popup: bool = False,
 ) -> JsonDict:
-    return accessibility.wait_for_element_gone(
+    filt = ElementFilter(
         query=query,
-        app_name=app_name,
         role=role,
-        timeout_ms=timeout_ms,
-        poll_interval_ms=poll_interval_ms,
+        app_name=app_name,
         showing_only=showing_only,
         clickable_only=clickable_only,
         bounds_only=bounds_only,
         within_element_id=within_element_id,
         within_popup=within_popup,
+    )
+    return accessibility.wait_for_element_gone(
+        filt, timeout_ms=timeout_ms, poll_interval_ms=poll_interval_ms
     )
 
 

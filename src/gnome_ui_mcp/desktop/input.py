@@ -8,7 +8,6 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from ..runtime.gi_env import Atspi, Gdk, Gio, GLib
 
@@ -17,7 +16,7 @@ try:
 except ImportError:
     Image = None  # type: ignore
 
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 
 def get_display_scale_factor() -> int:
@@ -1044,10 +1043,10 @@ def _screenshot_window_dbus(
             _release_screenshot_bus(bus)
 
 
-def _validate_screenshot_path(filename: str | None) -> tuple[Path, JsonDict | None]:
+def _validate_screenshot_path(filename: str | None) -> Path:
     """Validate a screenshot filename is within CACHE_DIR (path traversal protection).
 
-    Returns (output_path, error_dict). If error_dict is not None, the path is invalid.
+    Raises ValueError if the path is outside CACHE_DIR.
     """
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -1055,17 +1054,14 @@ def _validate_screenshot_path(filename: str | None) -> tuple[Path, JsonDict | No
         output = Path(filename).expanduser().resolve()
         try:
             output.relative_to(CACHE_DIR.resolve())
-        except ValueError:
-            # Path is not relative to CACHE_DIR
-            return output, {
-                "success": False,
-                "error": f"Path must be within {CACHE_DIR}",
-            }
+        except ValueError as exc:
+            msg = f"Path must be within {CACHE_DIR}"
+            raise ValueError(msg) from exc
     else:
         output = CACHE_DIR / f"screenshot-{int(time.time() * 1000)}.png"
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    return output, None
+    return output
 
 
 def screenshot_info() -> JsonDict:
@@ -1095,9 +1091,10 @@ def screenshot(
     max_width: int | None = None,
     scale_to_logical: bool = False,
 ) -> JsonDict:
-    output, error = _validate_screenshot_path(filename)
-    if error:
-        return error
+    try:
+        output = _validate_screenshot_path(filename)
+    except ValueError as exc:
+        return {"success": False, "error": str(exc)}
 
     try:
         success, filename_used = _screenshot_dbus(str(output))
@@ -1173,9 +1170,10 @@ def screenshot_area(
         return {"success": False, "error": "Width and height must be positive"}
 
     if filename:
-        output, error = _validate_screenshot_path(filename)
-        if error:
-            return error
+        try:
+            output = _validate_screenshot_path(filename)
+        except ValueError as exc:
+            return {"success": False, "error": str(exc)}
     else:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         output = CACHE_DIR / f"screenshot-area-{int(time.time() * 1000)}.png"
@@ -1206,9 +1204,10 @@ def screenshot_window(
     filename: str | None = None,
 ) -> JsonDict:
     if filename:
-        output, error = _validate_screenshot_path(filename)
-        if error:
-            return error
+        try:
+            output = _validate_screenshot_path(filename)
+        except ValueError as exc:
+            return {"success": False, "error": str(exc)}
     else:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         output = CACHE_DIR / f"screenshot-window-{int(time.time() * 1000)}.png"

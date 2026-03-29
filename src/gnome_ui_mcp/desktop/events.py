@@ -9,8 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ..runtime.gi_env import Atspi, GLib
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 _MAX_BUFFER = 1000
 

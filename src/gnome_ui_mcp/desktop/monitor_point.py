@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from ..runtime.gi_env import Gdk
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 
 def get_monitor_for_point(x: int, y: int) -> JsonDict:

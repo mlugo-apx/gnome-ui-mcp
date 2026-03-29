@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
-
 from ..runtime.gi_env import Gio
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 
 def _app_info_to_dict(info: Gio.DesktopAppInfo) -> JsonDict:

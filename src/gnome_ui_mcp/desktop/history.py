@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import time
 from collections import deque
-from typing import Any
 
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 _UNDO_HINTS: dict[str, str | None] = {
     "type_text": "ctrl+z",

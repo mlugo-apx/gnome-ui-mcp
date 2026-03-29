@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import uuid
 from collections import OrderedDict
-from typing import Any
 
 from . import accessibility
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 # Module-level snapshot store: id -> snapshot dict (capped at 20 most recent)
 _MAX_SNAPSHOTS = 20

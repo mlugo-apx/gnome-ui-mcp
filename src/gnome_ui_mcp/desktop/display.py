@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..runtime.gi_env import Gio, GLib
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 MUTTER_DISPLAY_CONFIG_BUS = "org.gnome.Mutter.DisplayConfig"
 MUTTER_DISPLAY_CONFIG_PATH = "/org/gnome/Mutter/DisplayConfig"

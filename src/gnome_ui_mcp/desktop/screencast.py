@@ -3,11 +3,9 @@ from __future__ import annotations
 import subprocess
 import time
 from pathlib import Path
-from typing import Any
 
 from ..runtime.gi_env import Gio, GLib
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 CACHE_DIR = Path.home() / ".cache" / "gnome-ui-mcp" / "recordings"
 GNOME_SHELL_SCREENCAST_BUS = "org.gnome.Shell.Screencast"

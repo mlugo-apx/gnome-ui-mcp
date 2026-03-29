@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import re
 import time
-from typing import Any
 
 from . import accessibility
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 
 def assert_element(

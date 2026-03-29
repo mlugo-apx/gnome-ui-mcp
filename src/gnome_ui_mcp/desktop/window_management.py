@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from . import input
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 _SNAP_COMBOS: dict[str, str] = {
     "maximize": "super+Up",

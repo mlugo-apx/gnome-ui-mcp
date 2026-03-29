@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from ..runtime.gi_env import Gio
-
-JsonDict = dict[str, Any]
+from .types import JsonDict
 
 _KEY_CATEGORIES: dict[str, list[str]] = {
     "navigation": [
