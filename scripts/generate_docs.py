@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate OpenAPI 3.1 JSON documentation from FastMCP tool definitions."""
+
 from __future__ import annotations
 
 import json
@@ -11,7 +12,7 @@ from typing import Any
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from gnome_ui_mcp import __version__
+from gnome_ui_mcp import __version__  # noqa: E402
 from gnome_ui_mcp.server import mcp  # noqa: E402
 
 OUTPUT = ROOT / "docs" / "openapi.json"
@@ -168,8 +169,14 @@ def tool_to_operation(tool: Any) -> dict:
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "success": {"type": "boolean", "description": "Whether the tool call succeeded"},
-                                "error": {"type": "string", "description": "Error message if success is false"},
+                                "success": {
+                                    "type": "boolean",
+                                    "description": "Whether the tool call succeeded",
+                                },
+                                "error": {
+                                    "type": "string",
+                                    "description": "Error message if success is false",
+                                },
                             },
                         }
                     }
@@ -243,7 +250,10 @@ def main() -> None:
     try:
         tools = mcp._tool_manager.list_tools()
     except AttributeError:
-        print("Error: Could not access FastMCP tool registry. Is mcp._tool_manager available?", file=sys.stderr)
+        print(
+            "Error: Could not access FastMCP tool registry. Is mcp._tool_manager available?",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     if not tools:
