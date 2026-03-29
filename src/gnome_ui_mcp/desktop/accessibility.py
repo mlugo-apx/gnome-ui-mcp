@@ -1160,6 +1160,34 @@ def set_toggle_state(element_id: str, desired_state: bool) -> JsonDict:
     current_active = _is_active_toggle(states)
 
     if current_active == desired_state:
+        return {
+            "success": True,
+            "element_id": element_id,
+            "toggled": False,
+            "new_active": current_active,
+        }
+
+    action_index = _find_action_index(accessible, None)
+    if action_index is None:
+        return {
+            "success": False,
+            "error": "Element has no toggle action available",
+            "element_id": element_id,
+        }
+
+    accessible.do_action(action_index)
+    new_states = _element_states(accessible)
+    new_active = _is_active_toggle(new_states)
+
+    return {
+        "success": True,
+        "element_id": element_id,
+        "toggled": True,
+        "new_active": new_active,
+    }
+
+
+# ---------------------------------------------------------------------------
 # expand_node / collapse_node
 # ---------------------------------------------------------------------------
 
@@ -1174,14 +1202,6 @@ def expand_node(element_id: str) -> JsonDict:
             "success": True,
             "element_id": element_id,
             "toggled": False,
-            "new_active": current_active,
-        }
-
-    action_index = _find_action_index(accessible, None)
-    if action_index is None:
-        return {
-            "success": False,
-            "error": "Element has no toggle action available",
             "state": "expanded",
         }
 
@@ -1196,14 +1216,10 @@ def expand_node(element_id: str) -> JsonDict:
         }
 
     accessible.do_action(action_index)
-    new_states = _element_states(accessible)
-    new_active = _is_active_toggle(new_states)
-
     return {
         "success": True,
         "element_id": element_id,
         "toggled": True,
-        "new_active": new_active,
         "state": "expanded",
     }
 

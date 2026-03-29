@@ -603,7 +603,6 @@ def compare_screenshots(
 # Phase 7a: Deep AT-SPI query tools
 
 
-<<<<<<< HEAD
 def select_option(element_id: str, child_index: int) -> JsonDict:
     return accessibility.select_option(element_id=element_id, child_index=child_index)
 
@@ -625,9 +624,12 @@ def navigate_menu(
     app_name: str | None = None,
 ) -> JsonDict:
     return interaction.navigate_menu(menu_path=menu_path, app_name=app_name)
+
+
 def file_dialog_set_path(path: str) -> JsonDict:
     return file_dialog.file_dialog_set_path(path=path)
-=======
+
+
 def dismiss_notification(notification_id: int) -> JsonDict:
     return notifications.dismiss_notification(notification_id=notification_id)
 
@@ -636,7 +638,6 @@ def click_notification_action(notification_id: int, action_key: str) -> JsonDict
     return notifications.click_notification_action(
         notification_id=notification_id, action_key=action_key
     )
->>>>>>> fork/feat/click-notification-action
 
 
 def get_focused_element() -> JsonDict:
