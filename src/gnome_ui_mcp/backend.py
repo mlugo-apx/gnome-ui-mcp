@@ -204,6 +204,10 @@ def mouse_move(x: int, y: int) -> JsonDict:
     return input.perform_mouse_move(x=x, y=y)
 
 
+def mouse_move_relative(dx: float, dy: float) -> JsonDict:
+    return input.mouse_move_relative(dx=dx, dy=dy)
+
+
 def hover_element(element_id: str) -> JsonDict:
     return interaction.hover_element(element_id=element_id)
 

@@ -244,6 +244,16 @@ def mouse_move(x: int, y: int) -> CallToolResult:
     return _run_tool(lambda: backend.mouse_move(x=x, y=y))
 
 
+@mcp.tool(
+    description=(
+        "Move the mouse cursor by a relative offset (dx, dy) from its current position. "
+        "Useful when absolute coordinates are not known."
+    )
+)
+def mouse_move_relative(dx: float, dy: float) -> CallToolResult:
+    return _run_tool(lambda: backend.mouse_move_relative(dx=dx, dy=dy))
+
+
 @mcp.tool(description="Replace the text contents of an editable element.")
 def set_element_text(element_id: str, text: str) -> CallToolResult:
     return _run_tool(lambda: backend.set_element_text(element_id=element_id, text=text))
