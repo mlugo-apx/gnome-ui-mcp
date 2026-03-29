@@ -505,6 +505,16 @@ def get_focused_element() -> CallToolResult:
 
 @mcp.tool(
     description=(
+        "Select a child item within a container element via the AT-SPI Selection "
+        "interface. Use for combo boxes, list boxes, and menus."
+    )
+)
+def select_option(element_id: str, child_index: int) -> CallToolResult:
+    return _run_tool(lambda: backend.select_option(element_id=element_id, child_index=child_index))
+
+
+@mcp.tool(
+    description=(
         "Return extended AT-SPI properties for an element: value, selection, "
         "relations, attributes, and image info."
     )

@@ -1099,6 +1099,50 @@ def get_focused_element(*, max_depth: int = 16) -> JsonDict:
 
 
 # ---------------------------------------------------------------------------
+# select_option
+# ---------------------------------------------------------------------------
+
+
+def select_option(element_id: str, child_index: int) -> JsonDict:
+    """Select a child item via the AT-SPI Selection interface."""
+    accessible = _resolve_element(element_id)
+    sel_iface = _safe_call(accessible.get_selection_iface)
+    if sel_iface is None:
+        return {
+            "success": False,
+            "error": "Element does not support the Selection interface",
+            "element_id": element_id,
+        }
+
+    result = sel_iface.select_child(child_index)
+    if not result:
+        return {
+            "success": False,
+            "error": f"Failed to select child at index {child_index}",
+            "element_id": element_id,
+            "child_index": child_index,
+        }
+
+    # Read back selected item info
+    n_selected = _safe_call(sel_iface.get_n_selected_children, 0) or 0
+    selected_item: JsonDict | None = None
+    if n_selected > 0:
+        child = _safe_call(lambda: sel_iface.get_selected_child(0))
+        if child is not None:
+            selected_item = {
+                "name": _safe_call(child.get_name, ""),
+                "role": _safe_call(child.get_role_name, ""),
+            }
+
+    return {
+        "success": True,
+        "element_id": element_id,
+        "child_index": child_index,
+        "selected_item": selected_item,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Item 2: get_element_properties
 # ---------------------------------------------------------------------------
 

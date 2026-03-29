@@ -596,6 +596,10 @@ def compare_screenshots(
 # Phase 7a: Deep AT-SPI query tools
 
 
+def select_option(element_id: str, child_index: int) -> JsonDict:
+    return accessibility.select_option(element_id=element_id, child_index=child_index)
+
+
 def get_focused_element() -> JsonDict:
     return accessibility.get_focused_element()
 
