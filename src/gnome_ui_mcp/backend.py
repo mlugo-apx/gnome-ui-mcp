@@ -4,6 +4,7 @@ import time
 
 from .desktop import (
     accessibility,
+    app_log,
     apps,
     dbus,
     display,
@@ -14,6 +15,7 @@ from .desktop import (
     ocr,
     screencast,
     visual,
+    wayland_info,
     workspaces,
 )
 
@@ -499,3 +501,15 @@ def screen_record_start(
 
 def screen_record_stop(to_gif: bool = False, gif_fps: int = 10, gif_width: int = 640) -> JsonDict:
     return screencast.screen_record_stop(to_gif=to_gif, gif_fps=gif_fps, gif_width=gif_width)
+
+
+def wayland_protocols(filter_protocol: str | None = None) -> JsonDict:
+    return wayland_info.wayland_info(filter_protocol=filter_protocol)
+
+
+def launch_with_logging(command: str) -> JsonDict:
+    return app_log.launch_with_logging(command=command)
+
+
+def read_app_log(pid: int, last_n_lines: int = 0) -> JsonDict:
+    return app_log.read_app_log(pid=pid, last_n_lines=last_n_lines)
