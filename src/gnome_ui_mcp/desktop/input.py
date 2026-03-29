@@ -10,15 +10,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from ..runtime.gi_env import Atspi, Gdk, Gio, GLib
+
 try:
     from PIL import Image
-
-    _HAS_PIL = True
 except ImportError:
     Image = None  # type: ignore
-    _HAS_PIL = False
-
-from ..runtime.gi_env import Atspi, Gdk, Gio, GLib
 
 JsonDict = dict[str, Any]
 
@@ -1097,7 +1094,7 @@ def screenshot(
     scale_factor = get_display_scale_factor()
 
     # If resizing is requested but PIL is not available, return error
-    if (scale_to_logical or max_width) and not _HAS_PIL:
+    if (scale_to_logical or max_width) and Image is None:
         return {
             "success": False,
             "error": (
@@ -1110,7 +1107,7 @@ def screenshot(
     final_path = filename_used
 
     # Open image and get dimensions
-    if _HAS_PIL:
+    if Image is not None:
         img = Image.open(filename_used)
         pixel_w, pixel_h = img.size
     else:
