@@ -81,7 +81,9 @@ class TestFilterRoles:
         desktop = _make_accessible("desktop", "desktop", children=[app])
 
         with patch.object(accessibility, "_desktop", return_value=desktop):
-            result = accessibility.accessibility_tree(opts=TreeOptions(max_depth=4, filter_roles=["push button"]))
+            result = accessibility.accessibility_tree(
+                opts=TreeOptions(max_depth=4, filter_roles=["push button"])
+            )
 
         assert result["success"] is True
         names = _collect_names(result["trees"][0])
@@ -95,7 +97,9 @@ class TestFilterRoles:
         desktop = _make_accessible("desktop", "desktop", children=[app])
 
         with patch.object(accessibility, "_desktop", return_value=desktop):
-            result = accessibility.accessibility_tree(opts=TreeOptions(max_depth=4, filter_roles=[]))
+            result = accessibility.accessibility_tree(
+                opts=TreeOptions(max_depth=4, filter_roles=[])
+            )
 
         names = _collect_names(result["trees"][0])
         assert "Save" in names
@@ -114,7 +118,9 @@ class TestFilterStates:
         desktop = _make_accessible("desktop", "desktop", children=[app])
 
         with patch.object(accessibility, "_desktop", return_value=desktop):
-            result = accessibility.accessibility_tree(opts=TreeOptions(max_depth=4, filter_states=["focused"]))
+            result = accessibility.accessibility_tree(
+                opts=TreeOptions(max_depth=4, filter_states=["focused"])
+            )
 
         names = _collect_names(result["trees"][0])
         assert "Input" in names
@@ -131,7 +137,9 @@ class TestShowingOnly:
         desktop = _make_accessible("desktop", "desktop", children=[app])
 
         with patch.object(accessibility, "_desktop", return_value=desktop):
-            result = accessibility.accessibility_tree(opts=TreeOptions(max_depth=4, showing_only=True))
+            result = accessibility.accessibility_tree(
+                opts=TreeOptions(max_depth=4, showing_only=True)
+            )
 
         names = _collect_names(result["trees"][0])
         assert "Visible" in names
@@ -144,7 +152,9 @@ class TestShowingOnly:
         desktop = _make_accessible("desktop", "desktop", children=[app])
 
         with patch.object(accessibility, "_desktop", return_value=desktop):
-            result = accessibility.accessibility_tree(opts=TreeOptions(max_depth=4, showing_only=False))
+            result = accessibility.accessibility_tree(
+                opts=TreeOptions(max_depth=4, showing_only=False)
+            )
 
         names = _collect_names(result["trees"][0])
         assert "Visible" in names
